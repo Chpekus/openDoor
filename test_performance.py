@@ -2,6 +2,7 @@ import mediapipe as mp
 import cv2
 import os
 import time
+from multiprocessing import Pool, cpu_count
 
 def finger_is_open(wrist, tip, pip, coeff):
     """
@@ -59,34 +60,81 @@ def classify_gesture(hand_landmarks):
     else:
         return f"{list_open_fingers}: {count_open_fingers}"
     
+# Глобальные для КАЖДОГО процесса (в main-процессе они не используются)
+mp_hands = None
+hands = None
+
+def init_worker():
+    """
+    Вызывается один раз при старте КАЖДОГО процесса пула.
+    Здесь создаём свой экземпляр Hands.
+    """
+    global mp_hands, hands
+    import mediapipe as mp  # импорт внутри, чтобы корректно работать в дочернем процессе
+
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(
+        static_image_mode=False,
+        max_num_hands=2,
+        min_detection_confidence=0.7,
+        min_tracking_confidence=0.5
+    )
+
+def process_file(file_path):
+    """
+    Обрабатывает ОДИН файл: читает, прогоняет через mediapipe, классифицирует жесты.
+    Возвращает, например, (имя_файла, список_жестов).
+    """
+    global hands
+
+    image = cv2.imread(file_path)
+    if image is None:
+        return file_path, []  # файл не прочитался
+
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = hands.process(image_rgb)
+
+    gestures = []
+
+    if results.multi_hand_landmarks and results.multi_handedness:
+        for hand_landmarks, hand_handedness in zip(
+            results.multi_hand_landmarks, results.multi_handedness
+        ):
+            gesture_name = classify_gesture(hand_landmarks)
+            gestures.append(gesture_name)
+
+    return file_path, gestures
 
 
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    static_image_mode=False,
-    max_num_hands=2,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.5
-)
+if __name__ == "__main__":
+    # список файлов
+    files = [
+        os.path.join("data_test", f)
+        for f in os.listdir("data_test")
+        if f.endswith('.jpg') or f.endswith('.png')
+    ]
 
-files = [os.path.join("data_test", f) for f in os.listdir("data_test") if f.endswith('.jpg') or f.endswith('.png')]
+    num_workers = int(input("Введите количество воркеров для теста: "))
 
-for _ in range(10):
-    t = time.time()
+    for _ in range(2):
+        
 
-    for file in files:
-        image = cv2.imread(file)
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = hands.process(image_rgb)
-        if results.multi_hand_landmarks and results.multi_handedness:
-                # Найдены руки
-                # gestures_for_filename = []
+        with Pool(processes=num_workers, initializer=init_worker) as pool:
+            # imap_unordered даёт результаты по мере готовности
+            t_start = 0
+            c = 0
+            for file_path, gestures in pool.imap_unordered(process_file, files):
+                if t_start == 0:
+                    t_start = time.time()
+                c+= 1
+                # если хочешь печатать —
+                if gestures:
+                    print(os.path.basename(file_path), "->", "; ".join(gestures))
+                # если не нужно печатать — можешь убрать это для ещё большей скорости
 
-                for idx, (hand_landmarks, hand_handedness) in enumerate(
-                    zip(results.multi_hand_landmarks, results.multi_handedness)
-                ):
-                    gesture_name = classify_gesture(hand_landmarks)
-                    print(gesture_name, end='; ')
-
-    print("Processed {} images in {:.2f} seconds, is {:.2f} per file".format(len(files), time.time() - t, (time.time() - t)/len(files)))
-    
+        elapsed = time.time() - t_start
+        print(
+            "Processed {} images in {:.2f} seconds, is {:.4f} per file ({} workers; {} find gest)".format(
+                len(files), elapsed, elapsed / len(files), num_workers, c
+            )
+        )

@@ -116,7 +116,9 @@ if __name__ == "__main__":
 
     num_workers = int(input("Введите количество воркеров для теста: "))
 
-    for _ in range(2):
+    avg_times = 0
+    count_test = int(input("Введите количество прогонов для теста: "))
+    for _ in range(count_test):
         
 
         with Pool(processes=num_workers, initializer=init_worker) as pool:
@@ -138,3 +140,5 @@ if __name__ == "__main__":
                 len(files), elapsed, elapsed / len(files), num_workers, c
             )
         )
+        avg_times += elapsed / len(files)
+print("Average time per file over {} runs: {:.4f} seconds with {} workers".format(count_test, avg_times / count_test, num_workers))

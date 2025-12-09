@@ -54,14 +54,16 @@ def open_door(source_vebka=False):
     writer = csv.writer(csvfile, delimiter=";")
     writer.writerow(["timestamp", "filename", "hand_index", "handedness", "gesture"])
 
-    try:
-        if not source_vebka:
-            stream_URL = novotelecom_integrarion.get_stream_url_via_requests(login, password)
-            cap = cv2.VideoCapture(stream_URL)
-        else:
-            cap = cv2.VideoCapture(0)
+    def open_stream():
+        stream_URL = novotelecom_integrarion.get_stream_url_via_requests(login, password)
+        return cv2.VideoCapture(stream_URL)
+        
 
-        print("Начинаю захват и анализ кадров...")
+    
+
+    try:
+        cap = open_stream()
+        #print("Начинаю захват и анализ кадров...")
 
         while True:
             now = datetime.now()
@@ -70,8 +72,8 @@ def open_door(source_vebka=False):
 
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
-                print("Не удалось прочитать кадр, пропускаю")
-                continue
+                cap.release()
+                cap = open_stream()
             
 
             # ==== обновляем статистику по кадрам ====
@@ -83,7 +85,7 @@ def open_door(source_vebka=False):
                     frame_times.popleft()
                 last_frame = frame_bgr.copy()
             
-            c+=1
+            c+=1 # Скип каждого второго кадра для т.к. сервак слабый и лень в оптимизацию пока
             if c%2==0:
                 continue
 

@@ -73,7 +73,9 @@ def open_door(source_vebka=False):
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
                 cap.release()
+                time.sleep(1)
                 cap = open_stream()
+                continue
             
 
             # ==== обновляем статистику по кадрам ====

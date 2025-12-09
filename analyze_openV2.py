@@ -66,26 +66,13 @@ def open_door(source_vebka=False):
         while True:
             now = datetime.now()
             timestamp_str = now.strftime("%Y-%m-%d_%H-%M-%S.%f")[:-3]
-            c += 1
-            c %= 3
-            if c == 2:
-                continue
+            
 
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
                 print("Не удалось прочитать кадр, пропускаю")
                 continue
             
-            #Обрежем кадр - по четверти по ширине и по 15% высоте
-            h, w, _ = frame_bgr.shape
-            x_start = int(w * 0.25)   
-            x_end   = int(w * 0.75)   
-
-            y_start = int(h * 0.15)   
-            y_end   = int(h * 0.85)   
-
-            # обрезанный кадр
-            frame_bgr = frame_bgr[y_start:y_end, x_start:x_end]
 
             # ==== обновляем статистику по кадрам ====
             t_now = time.time()
@@ -95,6 +82,10 @@ def open_door(source_vebka=False):
                 while frame_times and frame_times[0] < limit:
                     frame_times.popleft()
                 last_frame = frame_bgr.copy()
+            
+            c+=1
+            if c%2==0:
+                continue
 
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)

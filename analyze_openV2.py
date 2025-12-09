@@ -34,6 +34,7 @@ app = Flask(__name__)
 
 
 def open_door(source_vebka=False):
+    c = 0
     global last_frame
 
     mp_hands = mp.solutions.hands
@@ -65,6 +66,10 @@ def open_door(source_vebka=False):
         while True:
             now = datetime.now()
             timestamp_str = now.strftime("%Y-%m-%d_%H-%M-%S.%f")[:-3]
+            c += 1
+            c %= 3
+            if c == 2:
+                continue
 
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
@@ -89,12 +94,11 @@ def open_door(source_vebka=False):
                 limit = t_now - 5.0
                 while frame_times and frame_times[0] < limit:
                     frame_times.popleft()
-                #last_frame = frame_bgr.copy()
-                last_frame = 0
+                last_frame = frame_bgr.copy()
 
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)
-            #output_frame = frame_bgr.copy()
+            output_frame = frame_bgr.copy()
 
             gesture_name = ""
 
@@ -129,7 +133,7 @@ def open_door(source_vebka=False):
                         filename = f"{now.strftime('%H-%M-%S')}.png"
                         output_path = os.path.join(output_dir, filename)
 
-                        #cv2.imwrite(output_path, output_frame)
+                        cv2.imwrite(output_path, output_frame)
 
     except KeyboardInterrupt:
         print("Остановка по Ctrl+C")

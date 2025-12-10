@@ -47,3 +47,4 @@ def send_post_open_door_request(bearer_token):
     resp = requests.post(url, json=payload, headers=headers)
     print(resp.status_code)
     print(resp.text)
+    return resp.status_code, resp.text

@@ -1,5 +1,5 @@
 import recognition_alorithms
-import novotelecom_integrarion
+from worker import task_queue, Task, io_worker
 
 from dotenv import load_dotenv
 import os
@@ -8,7 +8,6 @@ from datetime import datetime
 import math
 
 import cv2
-import csv
 import numpy as np
 import mediapipe as mp
 import json
@@ -27,8 +26,7 @@ frame_times = deque()
 last_frame = None         
 state_lock = threading.Lock() 
 
-SCREENSHOTS_ROOT = "screenshots_test"
-RESULTS_CSV = "gesture_results.csv"
+SCREENSHOTS_ROOT = "screenshot_of_open"
 
 app = Flask(__name__)
 
@@ -50,20 +48,25 @@ def open_door(source_vebka=False):
 
     os.makedirs(SCREENSHOTS_ROOT, exist_ok=True)
 
-    csvfile = open(RESULTS_CSV, mode="w", newline="", encoding="utf-8")
-    writer = csv.writer(csvfile, delimiter=";")
-    writer.writerow(["timestamp", "filename", "hand_index", "handedness", "gesture"])
+    def get_stream_url_via_worker(login, password):
+        task = Task(
+            kind="get_stream_url",
+            data={"login": login, "password": password},
+            need_result=True
+        )
+        task_queue.put(task)
+        task.event.wait()      # ждём пока воркер выполнит задачу
+        return task.result
 
     def open_stream():
-        stream_URL = novotelecom_integrarion.get_stream_url_via_requests(login, password)
-        return cv2.VideoCapture(stream_URL)
+        stream_URL = get_stream_url_via_worker(login, password)
+        return cv2.VideoCapture(0 if source_vebka else stream_URL)
         
 
     
 
     try:
         cap = open_stream()
-        #print("Начинаю захват и анализ кадров...")
 
         while True:
             now = datetime.now()
@@ -93,7 +96,6 @@ def open_door(source_vebka=False):
 
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)
-            output_frame = frame_bgr.copy()
 
             gesture_name = ""
 
@@ -101,40 +103,44 @@ def open_door(source_vebka=False):
                 for idx, (hand_landmarks, hand_handedness) in enumerate(
                     zip(results.multi_hand_landmarks, results.multi_handedness)
                 ):
-                    label = 0
-                    gesture_name = recognition_alorithms.classify_gesture(hand_landmarks)
+                    gesture_name = recognition_alorithms.classify_gesture(hand_landmarks) # Определение жеста на изображении
 
-                    writer.writerow([
-                        timestamp_str,
-                        "",
-                        idx,
-                        label,
-                        gesture_name
-                    ])
+                    sql = "INSERT INTO find_gesture(gesture) VALUES (%s)" # Запись найденного жеста в БД вместе
+                    task_queue.put(Task(
+                        kind="db_insert",
+                        data={"sql": sql, "params": gesture_name}
+                    ))
 
             findGesture.append(gesture_name)
             if len(findGesture) > 20:
                 findGesture.pop(0)
                 if findGesture.count("TiDishi") >= 5 and findGesture.count("Rock") >= 2:
-                    if time.time() - last_open > 7:
-                        print(f"открытие двери в {now.strftime('%H-%M-%S')}")
-                        novotelecom_integrarion.send_post_open_door_request(bearer_token)
+                    if time.time() - last_open > 7: # Открываем дверь не чаще, чем раз в 7 секунд
+                        
                         last_open = time.time()
 
-                        hour_dir = now.strftime("%H")
-                        output_dir = os.path.join(SCREENSHOTS_ROOT, hour_dir)
+                        dir = now.strftime("%d_%m") 
+                        output_dir = os.path.join(SCREENSHOTS_ROOT, dir)
                         os.makedirs(output_dir, exist_ok=True)
 
                         filename = f"{now.strftime('%H-%M-%S')}.png"
                         output_path = os.path.join(output_dir, filename)
 
-                        cv2.imwrite(output_path, output_frame)
+                        task_queue.put(Task( # отправляем задачу на открытие двери и запись в БД
+                            kind="open_door",
+                            data={"token": bearer_token, "path": output_path,}
+                            
+                        ))
+
+                        task_queue.put(Task( # отправляем задачу на сохранение скриншота
+                            kind="save_screenshot",
+                            data={"frame": last_frame, "path": output_path}
+                        ))
 
     except KeyboardInterrupt:
         print("Остановка по Ctrl+C")
     finally:
         hands.close()
-        csvfile.close()
         cap.release()
         cv2.destroyAllWindows()
         print("Завершено.")
@@ -186,13 +192,23 @@ def save_last_frame():
 
 
 def start_processing_thread():
-    t = threading.Thread(target=open_door, kwargs={"source_vebka": False}, daemon=True)
+    t = threading.Thread(target=open_door, kwargs={"source_vebka": True}, daemon=True)
     t.start()
     return t
+
+def start_io_workers(n=1):
+    workers = []
+    for _ in range(n):
+        t = threading.Thread(target=io_worker, daemon=True)
+        t.start()
+        workers.append(t)
+    return workers
 
 
 if __name__ == "__main__":
     # Запускаем поток обработки
+    
     start_processing_thread()
+    start_io_workers(n=1)
     app.run(host="0.0.0.0", port=8000)
 

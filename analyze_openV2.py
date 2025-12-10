@@ -104,14 +104,18 @@ def open_door(source_vebka=False):
                     zip(results.multi_hand_landmarks, results.multi_handedness)
                 ):
                     gesture_name = recognition_alorithms.classify_gesture(hand_landmarks) # Определение жеста на изображении
+                    findGesture.append(gesture_name)
 
+                    if gesture_name == "Hand too far":
+                        continue
+                    
                     sql = "INSERT INTO find_gesture(gesture) VALUES (%s)" # Запись найденного жеста в БД вместе
                     task_queue.put(Task(
                         kind="db_insert",
                         data={"sql": sql, "params": gesture_name}
                     ))
 
-            findGesture.append(gesture_name)
+            
             if len(findGesture) > 20:
                 findGesture.pop(0)
                 if findGesture.count("TiDishi") >= 5 and findGesture.count("Rock") >= 2:

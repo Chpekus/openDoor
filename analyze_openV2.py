@@ -192,7 +192,7 @@ def save_last_frame():
 
 
 def start_processing_thread():
-    t = threading.Thread(target=open_door, kwargs={"source_vebka": True}, daemon=True)
+    t = threading.Thread(target=open_door, kwargs={"source_vebka": False}, daemon=True)
     t.start()
     return t
 

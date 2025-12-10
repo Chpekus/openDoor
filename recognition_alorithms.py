@@ -1,3 +1,5 @@
+import math
+
 def finger_is_open(wrist, tip, pip, coeff):
     """
     Считаем палец "открытым", расстояние от кисти до кончика пальца больше, 
@@ -21,11 +23,20 @@ def open_fingers(hand_landmarks):
     coeffForFingers = [1.5, 1.6, 1.8, 1.8, 1.6]
 
     open_finger = []
-    
-    for tip_id, pip_id, coeff_id in zip(finger_tips, finger_pips, coeffForFingers):
-        open_finger.append(finger_is_open(hand_landmarks.landmark[0], hand_landmarks.landmark[tip_id], hand_landmarks.landmark[pip_id], coeff_id))
 
-    return open_finger
+    maxDist = 0
+    for tips_id in finger_tips:
+        dist = math.sqrt((hand_landmarks.landmark[0].x - hand_landmarks.landmark[tips_id].x)**2 + (hand_landmarks.landmark[0].y - hand_landmarks.landmark[tips_id].y)**2)
+        if dist > maxDist:
+            maxDist = dist
+
+    if maxDist > 0.3:
+        for tip_id, pip_id, coeff_id in zip(finger_tips, finger_pips, coeffForFingers):
+            open_finger.append(finger_is_open(hand_landmarks.landmark[0], hand_landmarks.landmark[tip_id], hand_landmarks.landmark[pip_id], coeff_id))
+
+        return open_finger
+    else:
+        return -1
 
 
 def classify_gesture(hand_landmarks):
@@ -34,7 +45,9 @@ def classify_gesture(hand_landmarks):
     """
     list_open_fingers = open_fingers(hand_landmarks)
     #return f"{list_open_fingers}"
-
+    if list_open_fingers == -1:
+        return "Hand too far"
+    
     count_open_fingers = sum(list_open_fingers)
     
     if count_open_fingers == 0:

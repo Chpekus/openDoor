@@ -38,7 +38,7 @@ def open_door(source_vebka=False):
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=False,
-        max_num_hands=2,
+        max_num_hands=1,
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5
     )
@@ -104,7 +104,7 @@ def open_door(source_vebka=False):
                     zip(results.multi_hand_landmarks, results.multi_handedness)
                 ):
                     gesture_name = recognition_alorithms.classify_gesture(hand_landmarks) # Определение жеста на изображении
-                    findGesture.append(gesture_name)
+                    
 
                     if gesture_name == "Hand too far":
                         continue
@@ -115,7 +115,7 @@ def open_door(source_vebka=False):
                         data={"sql": sql, "params": gesture_name}
                     ))
 
-            
+            findGesture.append(gesture_name)
             if len(findGesture) > 20:
                 findGesture.pop(0)
                 if findGesture.count("TiDishi") >= 5 and findGesture.count("Rock") >= 2:

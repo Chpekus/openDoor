@@ -48,11 +48,15 @@ def io_worker():
                     )
 
             elif task.kind == "get_stream_url":
-                login = task.data["login"]
-                password = task.data["password"]
-                url = novotelecom_integrarion.get_stream_url_via_requests(login, password)
+                if "session" in task.data:
+                    session = task.data["session"]
+                    url, session = novotelecom_integrarion.get_stream_url_via_requests(session)
+                else:
+                    login = task.data["login"]
+                    password = task.data["password"]
+                    url, session = novotelecom_integrarion.get_stream_url_via_requests(login, password)
                 if task.need_result:
-                    task.result = url
+                    task.result = url, session
 
             elif task.kind == "save_screenshot":
                 frame = task.data["frame"]     # np.array (BGR)
@@ -64,7 +68,6 @@ def io_worker():
                 params = task.data["params"]
                 if not isinstance(params, (tuple, list)):
                     params = (params,)
-                print(f"Выполняется SQL: {sql} с параметрами {params}")
                 with conn.cursor() as cur:
                     cur.execute(sql, tuple(params))
 

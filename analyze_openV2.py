@@ -18,6 +18,7 @@ from flask import Flask, jsonify
 load_dotenv()
 login = os.getenv("LOGIN")     
 password = os.getenv("PASSWORD")
+website_session = None
 bearer_token = os.getenv("bearer_token")
 
 # ---------- Глобальные переменные для обмена между циклом и сервером ----------
@@ -45,28 +46,36 @@ def open_door(source_vebka=False):
 
     findGesture = []
     last_open = 0
-
+    
     os.makedirs(SCREENSHOTS_ROOT, exist_ok=True)
 
-    def get_stream_url_via_worker(login, password):
+    def get_stream_url_via_worker(login = "", password = "", session = None):
+        if session == None:
+            data={"login": login, "password": password}
+        else:
+            data={"session": session}
+        
         task = Task(
             kind="get_stream_url",
-            data={"login": login, "password": password},
+            data=data,
             need_result=True
         )
         task_queue.put(task)
         task.event.wait()      # ждём пока воркер выполнит задачу
         return task.result
-
-    def open_stream():
-        stream_URL = get_stream_url_via_worker(login, password)
-        return cv2.VideoCapture(0 if source_vebka else stream_URL)
+    
+    def open_stream(website_session = None):
+        if website_session == None:
+            stream_URL, website_session = get_stream_url_via_worker(login, password)
+        else:
+            stream_URL, website_session = get_stream_url_via_worker(website_session)
+        return cv2.VideoCapture(0 if source_vebka else stream_URL), website_session
         
 
     
 
     try:
-        cap = open_stream()
+        cap, website_session = open_stream()
 
         while True:
             now = datetime.now()
@@ -77,7 +86,7 @@ def open_door(source_vebka=False):
             if not ret or frame_bgr is None:
                 cap.release()
                 time.sleep(1)
-                cap = open_stream()
+                cap, website_session = open_stream(website_session)
                 continue
             
 

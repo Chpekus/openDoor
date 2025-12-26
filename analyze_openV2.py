@@ -68,7 +68,7 @@ def open_door(source_vebka=False):
         if website_session == None:
             stream_URL, website_session = get_stream_url_via_worker(login, password)
         else:
-            stream_URL, website_session = get_stream_url_via_worker(website_session)
+            stream_URL, website_session = get_stream_url_via_worker(session = website_session)
         return cv2.VideoCapture(0 if source_vebka else stream_URL), website_session
         
 

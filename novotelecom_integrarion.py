@@ -1,20 +1,21 @@
 import requests
 
-def get_stream_url_via_requests(login, password):
-    session = requests.Session()
+def get_stream_url_via_requests(login = "", password = "", session = None):
+    
+    if session == None: # Будем создавать сессию при первой авторизации и использовать её при следющих запросах стрима
+        session = requests.Session()
 
-    login_url = "https://video.2090000.ru/login.html"
-    payload = {
-        "User[Login]": login,
-        "User[Password]": password,
-    }
-    session.post(login_url, data=payload)
+        login_url = "https://video.2090000.ru/login.html"
+        payload = {
+            "User[Login]": login,
+            "User[Password]": password,
+        }
+        session.post(login_url, data=payload)
 
-    url = "https://video.2090000.ru/account/camera/3104703/url.html"
+    url = "https://video.2090000.ru/account/camera/3104703/url.html" # Получаем ссылку на стрим камеры, пока по статичкому id домофона
     params = {
         "speed_mul": 1,
         "time": "",
-                
         "timeZoneOffset": 25200,
         "format": "hls",
         "isSingleCamera": 1,
@@ -22,10 +23,10 @@ def get_stream_url_via_requests(login, password):
     }
 
     resp = session.get(url, params=params)
-    session.close()
+    # session.close()
     # print(resp.status_code)
-    # print(resp.json()['URL'])
-    return resp.json()['URL']
+    # print(resp.json())
+    return resp.json()['URL'], session # возвращаем ссылку на стрим и сессию
 
 
 def send_post_open_door_request(bearer_token):

@@ -50,7 +50,7 @@ def io_worker():
             elif task.kind == "get_stream_url":
                 if "session" in task.data:
                     session = task.data["session"]
-                    url, session = novotelecom_integrarion.get_stream_url_via_requests(session)
+                    url, session = novotelecom_integrarion.get_stream_url_via_requests(session=session)
                 else:
                     login = task.data["login"]
                     password = task.data["password"]

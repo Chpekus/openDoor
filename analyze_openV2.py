@@ -45,15 +45,15 @@ def open_door(source_vebka=False):
     )
 
     findGesture = []
-    last_open = 0
+    last_open = time.time() - 10
     
     os.makedirs(SCREENSHOTS_ROOT, exist_ok=True)
 
-    def get_stream_url_via_worker(login = "", password = "", session = None):
+    def get_stream_url_via_worker(session = None):
         if session == None:
-            data={"login": login, "password": password}
+            data={"session": None, "id_intercom" : 3104703}
         else:
-            data={"session": session}
+            data={"session": session, "id_intercom" : 3104703}
         
         task = Task(
             kind="get_stream_url",
@@ -66,21 +66,17 @@ def open_door(source_vebka=False):
     
     def open_stream(website_session = None):
         if website_session == None:
-            stream_URL, website_session = get_stream_url_via_worker(login, password)
+            stream_URL, website_session = get_stream_url_via_worker()
         else:
             stream_URL, website_session = get_stream_url_via_worker(session = website_session)
         return cv2.VideoCapture(0 if source_vebka else stream_URL), website_session
         
 
-    
-
     try:
         cap, website_session = open_stream()
 
         while True:
-            now = datetime.now()
-            timestamp_str = now.strftime("%Y-%m-%d_%H-%M-%S.%f")[:-3]
-            
+            now = datetime.now()            
 
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:

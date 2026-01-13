@@ -48,16 +48,16 @@ def io_worker():
                     )
 
             elif task.kind == "get_stream_url":
-                if "session" in task.data:
-                    session = task.data["session"]
-                else:
-                    session = None
-                
+                session = task.data["session"]    
                 id_intercom = task.data["id_intercom"]
-                url, session = novotelecom_integrarion.get_stream_url(session=session, id_intercom = id_intercom)
-                
+                url = novotelecom_integrarion.get_stream_url(session=session, id_intercom = id_intercom)
                 if task.need_result:
-                    task.result = url, session
+                    task.result = url
+            
+            elif task.kind == "get_website_session":
+                session = novotelecom_integrarion.make_session()
+                if task.need_result:
+                    task.result = session
 
             elif task.kind == "save_screenshot":
                 frame = task.data["frame"]     # np.array (BGR)

@@ -16,11 +16,14 @@ def make_session():
         session.post(login_url, data=payload)
         return session
 
-def get_stream_url(session = None, id_intercom = 0):
+def get_stream_url(session, id_intercom = 0):
+    if not(session):
+        print("Session is not excepted")
+        return 0
+    if id_intercom == 0:
+        print("undefiened id intercom")
+        return 0
     
-    if session == None: # Будем создавать сессию при первой авторизации и использовать её при следющих запросах стрима
-        session = make_session()
-
     url = f"https://video.2090000.ru/account/camera/{id_intercom}/url.html" # Получаем ссылку на стрим камеры, по  id домофона
     
     params = {
@@ -39,7 +42,7 @@ def get_stream_url(session = None, id_intercom = 0):
         print(f"Error in novotelecom integration {e}")
         return 0
     
-    return URL_Stream, session
+    return URL_Stream
 
 def send_post_open_door_request(bearer_token):
     url = "https://myhome.proptech.ru/rest/v1/places/260209/accesscontrols/10586/entrances/1824/actions"

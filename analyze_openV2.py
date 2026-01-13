@@ -6,6 +6,7 @@ import os
 import time
 from datetime import datetime
 import math
+import random
 
 import cv2
 import numpy as np
@@ -32,7 +33,7 @@ SCREENSHOTS_ROOT = "screenshot_of_open"
 app = Flask(__name__)
 
 
-def open_door(source_vebka=False):
+def open_door(source_vebka=False, id_intercom = 3104703):
     c = 0
     global last_frame
 
@@ -44,16 +45,21 @@ def open_door(source_vebka=False):
         min_tracking_confidence=0.5
     )
 
-    findGesture = []
-    last_open = time.time() - 10
     
+
     os.makedirs(SCREENSHOTS_ROOT, exist_ok=True)
 
-    def get_stream_url_via_worker(session = None):
-        if session == None:
-            data={"session": None, "id_intercom" : 3104703}
-        else:
-            data={"session": session, "id_intercom" : 3104703}
+    def get_session():
+        task = Task(
+            kind="get_website_session",
+            need_result=True
+        )
+        task_queue.put(task)
+        task.event.wait()
+        return task.result
+
+    def get_stream_url(session, id_intercom):    
+        data={"session": session, "id_intercom" : id_intercom}
         
         task = Task(
             kind="get_stream_url",
@@ -61,28 +67,30 @@ def open_door(source_vebka=False):
             need_result=True
         )
         task_queue.put(task)
-        task.event.wait()      # ждём пока воркер выполнит задачу
+        task.event.wait()
         return task.result
     
-    def open_stream(website_session = None):
-        if website_session == None:
-            stream_URL, website_session = get_stream_url_via_worker()
-        else:
-            stream_URL, website_session = get_stream_url_via_worker(session = website_session)
-        return cv2.VideoCapture(0 if source_vebka else stream_URL), website_session
+    def open_stream(session, id_intercom):
+        stream_URL = get_stream_url(session, id_intercom)
+        return cv2.VideoCapture(0 if source_vebka else stream_URL)
+    
+    findGesture = []
+    last_open = time.time() - 10
+
+    website_session = get_session()
+    cap = open_stream(website_session, id_intercom)
+    stream_time_request = time.time() + 1400 + random.randint(50,150)
         
-
     try:
-        cap, website_session = open_stream()
-
         while True:
             now = datetime.now()            
 
             ret, frame_bgr = cap.read()
-            if not ret or frame_bgr is None:
+            if time.time > stream_time_request or not ret or frame_bgr is None:
                 cap.release()
                 time.sleep(1)
-                cap, website_session = open_stream(website_session)
+                cap = open_stream(website_session)
+                stream_time_request = time.time() + 1400 + random.randint(50,150)
                 continue
             
 

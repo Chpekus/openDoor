@@ -52,6 +52,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     def get_session():
         task = Task(
             kind="get_website_session",
+            data=None,
             need_result=True
         )
         task_queue.put(task)

@@ -87,7 +87,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
             now = datetime.now()            
 
             ret, frame_bgr = cap.read()
-            if time.time > stream_time_request or not ret or frame_bgr is None:
+            if time.time() > stream_time_request or not ret or frame_bgr is None:
                 cap.release()
                 time.sleep(1)
                 cap = open_stream(website_session)

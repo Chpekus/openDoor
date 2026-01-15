@@ -1,6 +1,8 @@
 import requests
 import os
 from dotenv import load_dotenv
+from requests.exceptions import RequestException
+import json
 
 load_dotenv()
 login = os.getenv("LOGIN")     
@@ -35,14 +37,33 @@ def get_stream_url(session, id_intercom = 0):
         "_": "",
     }
     try:
-        resp = session.get(url, params=params)
-        URL_Stream = resp.json()['URL']
-    except Exception as e:
-        print(resp, resp.json())
-        print(f"Error in novotelecom integration {e}")
-        return 0
-    
-    return URL_Stream
+        resp = session.get(url, params=params, timeout=15, allow_redirects=True)
+        if resp.status_code != 200:
+            print("Bad status:", resp.status_code, "url:", resp.url)
+            print("Body (start):", resp.text[:300])
+            return None
+
+        ct = (resp.headers.get("Content-Type") or "").lower()
+        if "json" not in ct:
+            print("Not JSON Content-Type:", ct, "final url:", resp.url)
+            print("Body (start):", resp.text[:300])
+            return None
+
+        data = resp.json()
+        stream_url = data.get("URL")
+        if not stream_url:
+            print("JSON ok, but no URL field. keys:", list(data.keys()))
+            return None
+
+        return stream_url
+
+    except json.JSONDecodeError:
+        print("JSON decode failed. status:", getattr(resp, "status_code", None))
+        print("Body (start):", getattr(resp, "text", "")[:300])
+        return None
+    except RequestException as e:
+        print("Request failed:", e)
+        return None
 
 def send_post_open_door_request(bearer_token):
     url = "https://myhome.proptech.ru/rest/v1/places/260209/accesscontrols/10586/entrances/1824/actions"

@@ -73,6 +73,9 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     
     def open_stream(session, id_intercom):
         stream_URL = get_stream_url(session, id_intercom)
+        if not stream_URL:
+            print("cant get url to stream")
+            return None
         return cv2.VideoCapture(0 if source_vebka else stream_URL)
     
     findGesture = []
@@ -82,25 +85,22 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     cap = open_stream(website_session, id_intercom)
     stream_time_request = time.time() + 1400 + random.randint(50,150)
     ret, frame_bgr = None, None    
-
+    
     try:
         while True:
             now = datetime.now()            
 
             
             if time.time() > stream_time_request or not ret or frame_bgr is None:
-                
-                try:
+                if cap:
                     cap.release()
                     time.sleep(1)
-                    cap = open_stream(website_session, id_intercom)
-                except:
+                cap = open_stream(website_session, id_intercom)
+                if not cap:
                     print("Cant open stream, get new session and try again")
                     website_session = get_session()
                     continue
                 stream_time_request = time.time() + 1400 + random.randint(50,150)
-                ret, frame_bgr = cap.read()
-                continue
 
             ret, frame_bgr = cap.read()
 

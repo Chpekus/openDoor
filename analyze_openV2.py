@@ -81,23 +81,28 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
     stream_time_request = time.time() + 1400 + random.randint(50,150)
-        
+    ret, frame_bgr = None, None    
+
     try:
         while True:
             now = datetime.now()            
 
-            ret, frame_bgr = cap.read()
+            
             if time.time() > stream_time_request or not ret or frame_bgr is None:
-                cap.release()
-                time.sleep(1)
+                
                 try:
+                    cap.release()
+                    time.sleep(1)
                     cap = open_stream(website_session, id_intercom)
                 except:
+                    print("Cant open stream, get new session and try again")
                     website_session = get_session()
                     continue
                 stream_time_request = time.time() + 1400 + random.randint(50,150)
+                ret, frame_bgr = cap.read()
                 continue
-            
+
+            ret, frame_bgr = cap.read()
 
             # ==== обновляем статистику по кадрам ====
             t_now = time.time()

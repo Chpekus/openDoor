@@ -42,27 +42,12 @@ def get_stream_url(session, id_intercom = 0):
             print("Bad status:", resp.status_code, "url:", resp.url)
             print("Body (start):", resp.text[:300])
             return None
-
-        text = resp.text.lstrip()
-        looks_like_json = text.startswith("{") or text.startswith("[")
-        ct = (resp.headers.get("Content-Type") or "").lower()
-        
-        if "json" not in ct and not looks_like_json:
-            print("Not JSON Content-Type:", ct, "final url:", resp.url)
-            print("Body (start):", resp.text[:300])
-            return None
-
-        try:
-            data = resp.json()   
-        except Exception:
-            print("JSON parse failed. Content-Type:", ct)
-            print("Body (start):", resp.text[:300])
-            return None
+        session.close()
 
         data = resp.json()
         stream_url = data.get("URL")
         if not stream_url:
-            print("JSON ok, but no URL field. keys:", list(data.keys()))
+            print("JSON ok, but no URL field. keys:", list(data.keys()), data)
             return None
 
         return stream_url

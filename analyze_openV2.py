@@ -83,7 +83,9 @@ def open_door(source_vebka=False, id_intercom = 3104703):
 
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
-    stream_time_request = time.time() + 1400 + random.randint(50,150)
+    stream_time_request = time.time() + 1440 + random.randint(50,150) # Время жизни стрима + рандом для имитации человечности запроса
+
+
     ret, frame_bgr = None, None    
     
     try:
@@ -93,6 +95,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
             
             if time.time() > stream_time_request or not ret or frame_bgr is None:
                 if cap:
+                    print("\nOld url to stream die, get new url...")
                     cap.release()
                     time.sleep(1)
                 cap = open_stream(website_session, id_intercom)
@@ -103,7 +106,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
                 stream_time_request = time.time() + 1400 + random.randint(50,150)
 
             ret, frame_bgr = cap.read()
-
+            print("working", end= " ")
             # ==== обновляем статистику по кадрам ====
             t_now = time.time()
             with state_lock:

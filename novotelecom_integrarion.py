@@ -38,7 +38,7 @@ def get_stream_url(session, id_intercom = 0):
         resp = session.get(url, params=params)
         URL_Stream = resp.json()['URL']
     except Exception as e:
-        print(URL_Stream)
+        print(resp, resp.json())
         print(f"Error in novotelecom integration {e}")
         return 0
     

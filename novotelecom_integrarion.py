@@ -37,15 +37,15 @@ def get_stream_url(session, id_intercom = 0):
         "_": "",
     }
     try:
-        resp = session.get(url, params=params, timeout=15, allow_redirects=True)
+        # resp = session.get(url, params=params, timeout=15, allow_redirects=True)
+        resp = session.get(url, params=params)
+        #session.close()
         if resp.status_code != 200:
             print("Bad status:", resp.status_code, "url:", resp.url)
             print("Body (start):", resp.text[:300])
             return None
-        session.close()
-        if "application/json" not in resp.headers.get("Content-Type", ""):
-            print("Get HTML, not json")
-            return None
+        
+
         data = resp.json()
         stream_url = data.get("URL")
         if not stream_url:

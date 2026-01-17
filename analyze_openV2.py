@@ -57,6 +57,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
         )
         task_queue.put(task)
         task.event.wait()
+        print("Новая сессия готова")
         return task.result
 
     def get_stream_url(session, id_intercom):    
@@ -84,6 +85,7 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
     stream_time_request = time.time() + 1440 + random.randint(50,120) # Время жизни стрима + рандом для имитации человечности запроса
+    stream_time_request = time.time() + 9 # Время жизни стрима + рандом для имитации человечности запроса
 
 
     ret, frame_bgr = None, None  
@@ -102,9 +104,11 @@ def open_door(source_vebka=False, id_intercom = 3104703):
                 if not cap:
                     print("Cant open stream, get new session and try again")
                     website_session = get_session()
+                    time.sleep(1)
                     continue
                 stream_time_request = time.time() + 1440 + random.randint(50,120)
-            
+                stream_time_request = time.time() + 9
+
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
                 continue

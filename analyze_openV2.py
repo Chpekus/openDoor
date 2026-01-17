@@ -86,7 +86,8 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     stream_time_request = time.time() + 1440 + random.randint(50,120) # Время жизни стрима + рандом для имитации человечности запроса
 
 
-    ret, frame_bgr = None, None    
+    ret, frame_bgr = cap.read()
+    ret, frame_bgr = None, None  
     
     try:
         while True:
@@ -103,8 +104,8 @@ def open_door(source_vebka=False, id_intercom = 3104703):
                     print("Cant open stream, get new session and try again")
                     website_session = get_session()
                     continue
-                stream_time_request = time.time() + 1400 + random.randint(50,120)
-
+                stream_time_request = time.time() + 1440 + random.randint(50,120)
+            
             ret, frame_bgr = cap.read()
             if not ret or frame_bgr is None:
                 continue

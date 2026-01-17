@@ -43,7 +43,9 @@ def get_stream_url(session, id_intercom = 0):
             print("Body (start):", resp.text[:300])
             return None
         session.close()
-
+        if "application/json" not in resp.headers.get("Content-Type", ""):
+            print("Get HTML, not json")
+            return None
         data = resp.json()
         stream_url = data.get("URL")
         if not stream_url:

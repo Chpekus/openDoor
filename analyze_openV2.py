@@ -86,7 +86,6 @@ def open_door(source_vebka=False, id_intercom = 3104703):
     stream_time_request = time.time() + 1440 + random.randint(50,120) # Время жизни стрима + рандом для имитации человечности запроса
 
 
-    ret, frame_bgr = cap.read()
     ret, frame_bgr = None, None  
     
     try:

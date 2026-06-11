@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+screenshot_of_open/
+app.log
+nohup.out
+.venv/
+venv/

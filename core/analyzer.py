@@ -80,6 +80,7 @@ def open_door(source_vebka=False, id_intercom=None):
     
     def open_stream(session, id_intercom):
         stream_URL = get_stream_url(session, id_intercom)
+        log_info("door_open", f"Stream URL: {stream_URL}")
         if not stream_URL:
             log_warning("door_open", "Can't get URL to stream")
             return None
@@ -113,7 +114,12 @@ def open_door(source_vebka=False, id_intercom=None):
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
             ret, frame_bgr = cap.read()
-            if not ret or frame_bgr is None:
+            if not ret:
+                log_warning("door_open", "cap.read() returned False")
+                continue
+
+            if frame_bgr is None:
+                log_warning("door_open", "frame is None")
                 continue
             # ==== обновляем статистику по кадрам ====
             t_now = time.time()

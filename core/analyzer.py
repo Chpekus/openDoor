@@ -91,10 +91,17 @@ def open_door(source_vebka=False, id_intercom=None):
 
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
+    log_info(
+        "door_open",
+        f"opened={cap.isOpened()}"
+    )
     stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
     ret, frame_bgr = None, None  
-    
+    log_info(
+        "door_open",
+        f"ret={ret}"
+    )
     try:
         while True:
             now = datetime.now()            

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Календарь - OpenDoor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .navbar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-header h2 {
+            margin: 0;
+        }
+        
+        .nav-buttons a {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 0 5px;
+            display: inline-block;
+        }
+        
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calendar-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .calendar-table td {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            height: 80px;
+            vertical-align: top;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .calendar-table td:hover {
+            background: #f0f0f0;
+        }
+        
+        .calendar-table td.empty {
+            background: #fafafa;
+            cursor: default;
+        }
+        
+        .calendar-table td.empty:hover {
+            background: #fafafa;
+        }
+        
+        .day-cell {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .day-cell.has-events {
+            color: #667eea;
+        }
+        
+        .event-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .event-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-right: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🚪 OpenDoor</h1>
+        <div>
+            <span>Пользователь: <strong>{{ username }}</strong></span>
+            <a href="{{ url_for('live') }}">📹 Лайв</a>
+            <a href="{{ url_for('logout') }}">🚪 Выход</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="calendar-header">
+            <h2>📅 Календарь открытий двери</h2>
+            <div class="nav-buttons">
+                <a href="?year={{ year }}&month={% if month > 1 %}{{ month - 1 }}{% else %}12{% endif %}{% if month == 1 %}&year={{ year - 1 }}{% endif %}">← Пред</a>
+                <span>{{ year }}-{{ "%02d"|format(month) }}</span>
+                <a href="?year={{ year }}&month={% if month < 12 %}{{ month + 1 }}{% else %}1{% endif %}{% if month == 12 %}&year={{ year + 1 }}{% endif %}">След →</a>
+            </div>
+        </div>
+        
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th>Пн</th>
+                    <th>Вт</th>
+                    <th>Ср</th>
+                    <th>Чт</th>
+                    <th>Пт</th>
+                    <th>Сб</th>
+                    <th>Вс</th>
+                </tr>
+            </thead>
+            <tbody>
+                <script>
+                    const year = {{ year }};
+                    const month = {{ month }};
+                    const calendarData = {{ calendar_data | tojson }};
+                    
+                    const firstDay = new Date(year, month - 1, 1).getDay();
+                    const daysInMonth = new Date(year, month, 0).getDate();
+                    const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+                    
+                    let table = '';
+                    let dayCounter = 1;
+                    
+                    // Пустые клетки
+                    for (let i = 0; i < adjustedFirstDay; i++) {
+                        table += '<td class="empty"></td>';
+                    }
+                    
+                    // Дни месяца
+                    for (let i = 0; i < 6; i++) {
+                        table += '<tr>';
+                        for (let j = 0; j < 7; j++) {
+                            if (dayCounter <= daysInMonth) {
+                                const dayStr = String(dayCounter).padStart(2, '0');
+                                const hasEvents = calendarData.hasOwnProperty(dayStr);
+                                const eventCount = hasEvents ? calendarData[dayStr] : 0;
+                                
+                                if (hasEvents) {
+                                    table += `<td onclick="goToDay(${year}, ${month}, ${dayCounter})">`;
+                                    table += `<div class="day-cell has-events">${dayCounter}</div>`;
+                                    table += `<div class="event-count">`;
+                                    table += `<span class="event-indicator"></span>${eventCount} откр.`;
+                                    table += `</div></td>`;
+                                } else {
+                                    table += `<td><div class="day-cell">${dayCounter}</div></td>`;
+                                }
+                                dayCounter++;
+                            } else {
+                                table += '<td class="empty"></td>';
+                            }
+                        }
+                        table += '</tr>';
+                        if (dayCounter > daysInMonth) break;
+                    }
+                    
+                    document.querySelector('tbody').innerHTML = table;
+                    
+                    function goToDay(year, month, day) {
+                        const dayStr = String(day).padStart(2, '0');
+                        const monthStr = String(month).padStart(2, '0');
+                        window.location.href = `/day/${year}/${monthStr}/${dayStr}`;
+                    }
+                </script>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

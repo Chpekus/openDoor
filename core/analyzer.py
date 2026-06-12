@@ -91,17 +91,11 @@ def open_door(source_vebka=False, id_intercom=None):
 
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
-    log_info(
-        "door_open",
-        f"opened={cap.isOpened()}"
-    )
+
     stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
     ret, frame_bgr = None, None  
-    log_info(
-        "door_open",
-        f"ret={ret}"
-    )
+
     try:
         while True:
             now = datetime.now()            
@@ -112,7 +106,12 @@ def open_door(source_vebka=False, id_intercom=None):
                     log_info("door_open", "Requesting new stream URL...")
                     cap.release()
                     time.sleep(1)
+
                 cap = open_stream(website_session, id_intercom)
+                log_info(
+                    "door_open",
+                    f"opened={cap.isOpened()}"
+                )
                 if not cap:
                     log_warning("door_open", "Can't open stream, requesting new session...")
                     website_session = get_session()
@@ -121,6 +120,10 @@ def open_door(source_vebka=False, id_intercom=None):
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
             ret, frame_bgr = cap.read()
+            log_info(
+                "door_open",
+                f"ret={ret}"
+            )
             if not ret:
                 log_warning("door_open", "cap.read() returned False")
                 continue

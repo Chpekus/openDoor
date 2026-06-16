@@ -44,6 +44,7 @@ def open_door(source_vebka=False, id_intercom=None):
     
     c = 0
     global last_frame
+    global processed_frame
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -52,6 +53,7 @@ def open_door(source_vebka=False, id_intercom=None):
         min_detection_confidence=GESTURE_MIN_DETECTION_CONFIDENCE,
         min_tracking_confidence=GESTURE_MIN_TRACKING_CONFIDENCE
     )
+    mp_drawing = mp.solutions.drawing_utils
 
     log_info("door_open", f"Starting door opening service (intercom_id={id_intercom})")
 
@@ -146,6 +148,17 @@ def open_door(source_vebka=False, id_intercom=None):
 
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)
+            processed_frame = frame_bgr.copy()
+
+            cv2.putText(
+                processed_frame,
+                "Obrabotan",
+                (10, 35),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1.0,
+                (0, 255, 0),
+                2
+            )
 
             gesture_name = ""
 
@@ -162,6 +175,12 @@ def open_door(source_vebka=False, id_intercom=None):
                         kind="db_insert_gesture",
                         data={"gesture": gesture_name}
                     ))
+
+                    mp_drawing.draw_landmarks(
+                        processed_frame,
+                        hand_landmarks,
+                        mp_hands.HAND_CONNECTIONS
+                    )
 
             findGesture.append(gesture_name)
             if len(findGesture) > GESTURE_WINDOW_SIZE:

@@ -110,6 +110,7 @@ def open_door(source_vebka=False, id_intercom=None):
                     time.sleep(1)
 
                 cap = open_stream(website_session, id_intercom)
+
                 log_info(
                     "door_open",
                     f"opened={cap.isOpened()}"
@@ -119,6 +120,8 @@ def open_door(source_vebka=False, id_intercom=None):
                     website_session = get_session()
                     time.sleep(1)
                     continue
+
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
             ret, frame_bgr = cap.read()

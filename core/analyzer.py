@@ -28,6 +28,7 @@ from utils.logger import logger_main, log_info, log_warning, log_error, log_door
 
 frame_times = deque()     
 last_frame = None         
+processed_frame = None 
 state_lock = threading.Lock()
 
 
@@ -155,7 +156,7 @@ def open_door(source_vebka=False, id_intercom=None):
 
             cv2.putText(
                 processed_frame,
-                "Obrabotan",
+                "O",
                 (10, 35),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1.0,

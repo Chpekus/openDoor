@@ -45,7 +45,7 @@ SCREENSHOT_MAX_PER_DAY = 6
 SCREENSHOT_DAYS_TO_KEEP = 90
 
 # === Стрим ===
-STREAM_LIFETIME = 1440  # Минуты
+STREAM_LIFETIME = 1440  # Секунды
 
 # === Пользователи (для авторизации) ===
 USERS = {

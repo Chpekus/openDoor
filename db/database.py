@@ -109,7 +109,7 @@ def get_door_opens_for_day(year, month, day):
     sql = """
         SELECT img_path, response_code, response_text, timestamp
         FROM case_of_open
-        WHERE date = %s
+        WHERE DATE(timestamp) = TO_DATE(%s, 'YYYY-MM-DD')
         ORDER BY timestamp DESC
         LIMIT %s
     """

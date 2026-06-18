@@ -52,7 +52,7 @@ def io_worker():
                     log_door_open(screenshot_path, gestures, status_code, body)
                     
                     # Вставляем в БД
-                    insert_door_open(screenshot_path, status_code, body, gestures)
+                    insert_door_open(screenshot_path, status_code, body)
                     
                     log_info("worker", f"Door opened: {status_code}")
 

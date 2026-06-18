@@ -92,14 +92,14 @@ def insert_gesture(gesture_name):
     db.close()
 
 
-def insert_door_open(img_path, response_code, response_text, gestures_used):
+def insert_door_open(img_path, response_code, response_text):
     """Вставляет запись об открытии двери"""
     db = Database()
     sql = """
-        INSERT INTO case_of_open(img_path, response_code, response_text, gestures_used, timestamp)
+        INSERT INTO case_of_open(img_path, response_code, response_text, timestamp)
         VALUES (%s, %s, %s, %s, %s)
     """
-    db.execute(sql, (str(img_path), response_code, response_text, ",".join(gestures_used), datetime.now()))
+    db.execute(sql, (str(img_path), response_code, response_text, datetime.now()))
     db.close()
 
 
@@ -107,7 +107,7 @@ def get_door_opens_for_day(year, month, day):
     """Получает все открытия двери за день"""
     db = Database()
     sql = """
-        SELECT img_path, response_code, response_text, gestures_used, timestamp
+        SELECT img_path, response_code, response_text, timestamp
         FROM case_of_open
         WHERE DATE(timestamp) = %s
         ORDER BY timestamp DESC

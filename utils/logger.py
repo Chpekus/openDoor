@@ -55,6 +55,7 @@ logger_worker = setup_logger("worker", "worker.log")
 logger_recognition = setup_logger("recognition", "recognition.log")
 logger_door = setup_logger("door_open", "door_open.log")
 logger_database = setup_logger("database", "database.log")
+logger_app = setup_logger("app", "app.log") 
 
 
 def log_door_open(image_path, gestures, response_code, response_text):

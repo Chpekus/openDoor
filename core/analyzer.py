@@ -118,15 +118,17 @@ def open_door(source_vebka=False, id_intercom=None):
                     time.sleep(1)
                     continue
                 
+                log_info(
+                    "door_open",
+                    f"opened={cap.isOpened()}"
+                )
+                
 
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
             ret, frame_bgr = cap.read()
-            log_info(
-                "door_open",
-                f"ret={ret}"
-            )
+
             if not ret:
                 log_warning("door_open", "cap.read() returned False")
                 continue

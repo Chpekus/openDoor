@@ -113,7 +113,7 @@ def get_door_opens_for_day(year, month, day):
         ORDER BY timestamp DESC
         LIMIT %s
     """
-    date_str = f"{year}-{month}-{day}"
+    date_str = f"{int(year)}-{int(month):02d}-{int(day):02d}"
     from config.settings import SCREENSHOT_MAX_PER_DAY
     result = db.fetch_all(sql, (date_str, SCREENSHOT_MAX_PER_DAY))
     db.close()

@@ -97,7 +97,7 @@ def insert_door_open(img_path, response_code, response_text):
     db = Database()
     sql = """
         INSERT INTO case_of_open(img_path, response_code, response_text, timestamp)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s)
     """
     db.execute(sql, (str(img_path), response_code, response_text, datetime.now()))
     db.close()
@@ -109,7 +109,7 @@ def get_door_opens_for_day(year, month, day):
     sql = """
         SELECT img_path, response_code, response_text, timestamp
         FROM case_of_open
-        WHERE DATE(timestamp) = %s
+        WHERE date = %s
         ORDER BY timestamp DESC
         LIMIT %s
     """

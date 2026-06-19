@@ -143,16 +143,6 @@
                     <div class="screenshot-time">
                         ⏰ {{ open_event['timestamp'].strftime('%H:%M:%S') if open_event['timestamp'] else 'Неизвестно' }}
                     </div>
-                    <div class="screenshot-gestures">
-                        <strong>Жесты:</strong><br>
-                        {% if open_event['gestures_used'] %}
-                            {% for gesture in open_event['gestures_used'].split(',') %}
-                            <span class="gesture-badge">{{ gesture }}</span>
-                            {% endfor %}
-                        {% else %}
-                        <span class="gesture-badge">Неизвестны</span>
-                        {% endif %}
-                    </div>
                     <div style="margin-top: 10px; font-size: 11px; color: #999;">
                         Ответ: {{ open_event['response_code'] }}
                     </div>

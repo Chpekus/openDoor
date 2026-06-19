@@ -178,7 +178,7 @@ def api_recent_opens():
         "opens": [
             {
                 "timestamp": o['timestamp'].isoformat() if hasattr(o['timestamp'], 'isoformat') else str(o['timestamp']),
-                "gestures": o['gestures_used'].split(',') if o['gestures_used'] else [],
+                "gestures": [],
                 "response_code": o['response_code'],
                 "img_path": o['img_path']
             }

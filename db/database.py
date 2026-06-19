@@ -3,7 +3,7 @@
 """
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from datetime import datetime
+from datetime import datetime, time
 from config.settings import PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
 from utils.logger import log_error, log_info
 
@@ -103,22 +103,55 @@ def insert_door_open(img_path, response_code, response_text):
     db.close()
 
 
+def _normalize_timestamp(value):
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            try:
+                return time.fromisoformat(value)
+            except ValueError:
+                return value
+    return value
+
+
 def get_door_opens_for_day(year, month, day):
     """Получает все открытия двери за день"""
     db = Database()
-    sql = """
-        SELECT img_path, response_code, response_text, timestamp
-        FROM case_of_open
-        WHERE DATE(timestamp) = TO_DATE(%s, 'YYYY-MM-DD')
-        ORDER BY timestamp DESC
-        LIMIT %s
-    """
     date_str = f"{int(year)}-{int(month):02d}-{int(day):02d}"
+    path_day = f"{int(year)}/{int(month):02d}/{int(day):02d}"
     from config.settings import SCREENSHOT_MAX_PER_DAY
-    result = db.fetch_all(sql, (date_str, SCREENSHOT_MAX_PER_DAY))
+
+    column_info = db.fetch_one("""
+        SELECT data_type
+        FROM information_schema.columns
+        WHERE table_name = 'case_of_open'
+          AND column_name = 'timestamp'
+    """)
+    timestamp_type = (column_info or {}).get("data_type", "")
+
+    if timestamp_type in ("timestamp without time zone", "timestamp with time zone", "date"):
+        sql = """
+            SELECT img_path, response_code, response_text, timestamp
+            FROM case_of_open
+            WHERE timestamp::date = %s::date
+            ORDER BY timestamp DESC
+            LIMIT %s
+        """
+        params = (date_str, SCREENSHOT_MAX_PER_DAY)
+    else:
+        sql = """
+            SELECT img_path, response_code, response_text, timestamp
+            FROM case_of_open
+            WHERE replace(img_path, '\\', '/') LIKE %s
+            ORDER BY timestamp DESC
+            LIMIT %s
+        """
+        params = (f"%/{path_day}/%", SCREENSHOT_MAX_PER_DAY)
+
+    result = db.fetch_all(sql, params)
     for row in result:
-        if isinstance(row['timestamp'], str):
-            row['timestamp'] = datetime.fromisoformat(row['timestamp'])
+        row['timestamp'] = _normalize_timestamp(row['timestamp'])
     db.close()
     return result or []
 
@@ -127,7 +160,7 @@ def get_recent_door_opens(limit=10):
     """Получает последние открытия двери"""
     db = Database()
     sql = """
-        SELECT img_path, response_code, response_text, gestures_used, timestamp
+        SELECT img_path, response_code, response_text, timestamp
         FROM case_of_open
         ORDER BY timestamp DESC
         LIMIT %s

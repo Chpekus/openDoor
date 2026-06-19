@@ -200,15 +200,15 @@ def open_door(source_vebka=False, id_intercom=None):
                         last_open = time.time()
 
                         # Получаем путь с новой структурой (год/месяц/день)
-                        gestures_used = ["TiDishi", "Rock"]
-                        output_path = get_screenshot_path(now, gestures_used)
+                        gestures = ["TiDishi", "Rock"]
+                        output_path = get_screenshot_path(now, gestures)
 
                         task_queue.put(Task(
                             kind="open_door",
                             data={
                                 "token": BEARER_TOKEN,
                                 "path": str(output_path),
-                                "gestures": gestures_used
+                                "gestures": gestures
                             }
                         ))
 
@@ -217,7 +217,7 @@ def open_door(source_vebka=False, id_intercom=None):
                             data={"frame": last_frame, "path": str(output_path)}
                         ))
                         
-                        log_door_open(str(output_path), gestures_used, 200, "Queued")
+                        log_door_open(str(output_path), gestures, 200, "Queued")
 
     except KeyboardInterrupt:
         log_info("door_open", "Stopping by Ctrl+C")

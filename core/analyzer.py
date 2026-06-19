@@ -13,6 +13,14 @@ import mediapipe as mp
 import json
 from collections import deque
 
+from core.overlay import (
+    ERROR as LOCK_ERROR,
+    LOCKED,
+    OPEN as LOCK_OPEN,
+    PENDING as LOCK_PENDING,
+    draw_hand_landmarks,
+    draw_lock_status,
+)
 from core.recognition import classify_gesture
 from services.worker import task_queue, Task
 from config.settings import (
@@ -92,6 +100,31 @@ def open_door(source_vebka=False, id_intercom=None):
     findGesture = deque(maxlen=GESTURE_WINDOW_SIZE)
     opening_frame_window = deque(maxlen=GESTURE_WINDOW_SIZE)
     last_open = time.time() - 10
+    lock_status = LOCKED
+    lock_status_until = 0
+    lock_status_lock = threading.Lock()
+
+    def set_lock_status(status, ttl=0):
+        nonlocal lock_status, lock_status_until
+        with lock_status_lock:
+            lock_status = status
+            lock_status_until = time.time() + ttl if ttl else 0
+
+    def get_lock_status():
+        nonlocal lock_status, lock_status_until
+        with lock_status_lock:
+            if lock_status_until and time.time() > lock_status_until:
+                lock_status = LOCKED
+                lock_status_until = 0
+            return lock_status
+
+    def update_lock_status_when_open_task_done(task):
+        task.event.wait()
+        result = task.result or {}
+        if result.get("status_code") == 200:
+            set_lock_status(LOCK_OPEN, ttl=7)
+        else:
+            set_lock_status(LOCK_ERROR, ttl=3)
 
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
@@ -154,16 +187,6 @@ def open_door(source_vebka=False, id_intercom=None):
             results = hands.process(frame_rgb)
             processed_frame = frame_bgr.copy()
 
-            cv2.putText(
-                processed_frame,
-                "O",
-                (10, 35),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1.0,
-                (0, 255, 0),
-                2
-            )
-
             gesture_name = ""
 
             if results.multi_hand_landmarks and results.multi_handedness:
@@ -180,11 +203,14 @@ def open_door(source_vebka=False, id_intercom=None):
                         data={"gesture": gesture_name}
                     ))
 
-                    mp_drawing.draw_landmarks(
+                    draw_hand_landmarks(
                         processed_frame,
                         hand_landmarks,
-                        mp_hands.HAND_CONNECTIONS
+                        mp_hands,
+                        mp_drawing
                     )
+
+            draw_lock_status(processed_frame, get_lock_status())
 
             findGesture.append(gesture_name)
             opening_frame_window.append((gesture_name, processed_frame.copy()))
@@ -211,14 +237,22 @@ def open_door(source_vebka=False, id_intercom=None):
                                 clip_frames.append(frame)
                                 clip_counts[frame_gesture] += 1
 
-                        task_queue.put(Task(
+                        set_lock_status(LOCK_PENDING)
+                        open_task = Task(
                             kind="open_door",
                             data={
                                 "token": BEARER_TOKEN,
                                 "path": str(output_path),
                                 "gestures": gestures
-                            }
-                        ))
+                            },
+                            need_result=True
+                        )
+                        task_queue.put(open_task)
+                        threading.Thread(
+                            target=update_lock_status_when_open_task_done,
+                            args=(open_task,),
+                            daemon=True
+                        ).start()
 
                         task_queue.put(Task(
                             kind="save_open_clip",

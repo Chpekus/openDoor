@@ -106,6 +106,11 @@ def io_worker():
                     gestures = task.data.get("gestures", [])
                     
                     status_code, body = send_post_open_door_request(token)
+                    if task.need_result:
+                        task.result = {
+                            "status_code": status_code,
+                            "body": body
+                        }
                     
                     # Логируем открытие двери с временем
                     log_door_open(screenshot_path, gestures, status_code, body)
@@ -162,6 +167,12 @@ def io_worker():
                     db.close()
 
             except Exception as e:
+                if task.need_result:
+                    task.result = {
+                        "status_code": None,
+                        "body": str(e),
+                        "error": True
+                    }
                 log_error("worker", f"Error processing task {task.kind}: {e}", exc_info=True)
             finally:
                 if task.need_result:

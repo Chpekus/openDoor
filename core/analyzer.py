@@ -18,6 +18,7 @@ from core.overlay import (
     LOCKED,
     OPEN as LOCK_OPEN,
     PENDING as LOCK_PENDING,
+    draw_gesture_label,
     draw_hand_landmarks,
     draw_lock_status,
 )
@@ -211,6 +212,7 @@ def open_door(source_vebka=False, id_intercom=None):
                         mp_hands,
                         mp_drawing
                     )
+                    draw_gesture_label(processed_frame, hand_landmarks, gesture_name)
 
             draw_lock_status(processed_frame, get_lock_status())
 

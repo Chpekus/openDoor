@@ -21,6 +21,8 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 # === АУТЕНТИФИКАЦИЯ ===
 
@@ -192,7 +194,9 @@ def api_recent_opens():
 def api_image(img_path):
     """API: Получить изображение скриншота"""
     try:
-        full_path = Path(img_path)
+        requested_path = Path(img_path)
+        full_path = requested_path if requested_path.is_absolute() else PROJECT_ROOT / requested_path
+        full_path = full_path.resolve()
         if full_path.exists():
             return send_file(full_path, mimetype='image/png')
         else:

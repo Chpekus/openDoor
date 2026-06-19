@@ -3,107 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Лайв поток - OpenDoor</title>
+    <title>Стрим - OpenDoor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        
-        .navbar a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            padding: 8px 15px;
-            border-radius: 5px;
-            transition: background 0.3s;
-        }
-        
-        .navbar a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 20px;
-        }
-        
-        .stream-container {
-            background: #222;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .stream-frame {
-            width: 100%;
-            max-width: 800px;
-            height: auto;
-            border-radius: 5px;
-            display: block;
-            margin: 0 auto;
-        }
-        
-        .loading {
-            text-align: center;
-            color: #666;
-            padding: 20px;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .stat-box {
-            background: white;
-            border-radius: 5px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .stat-box h3 {
-            margin: 0 0 10px 0;
-            color: #667eea;
-        }
-        
-        .stat-box .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/live.css') }}">
 </head>
 <body>
     <div class="navbar">
-        <h1>🚪 OpenDoor</h1>
+        <h1>OpenDoor</h1>
         <div>
             <span>Пользователь: <strong>{{ username }}</strong></span>
-            <a href="{{ url_for('calendar') }}">📅 Календарь</a>
-            <a href="{{ url_for('logout') }}">🚪 Выход</a>
+            <a href="{{ url_for('calendar') }}">Календарь</a>
+            <a href="{{ url_for('logout') }}">Выход</a>
         </div>
     </div>
     
     <div class="container">
-        <h2>📹 Текущий поток</h2>
+        <h2>Текущий поток</h2>
         
         <div class="stream-container">
             <div id="loading" class="loading">Загрузка потока...</div>
-            <img id="stream-frame" class="stream-frame" style="display:none;">
+            <img id="stream-frame" class="stream-frame is-hidden">
         </div>
         
         <div class="stats">

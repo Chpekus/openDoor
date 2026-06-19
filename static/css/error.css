@@ -1,0 +1,32 @@
+.error-container {
+    width: min(600px, calc(100% - 32px));
+    margin: 50px auto;
+    padding: 28px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+}
+
+.error-container h1 {
+    margin-top: 0;
+    color: var(--color-danger);
+}
+
+.error-container a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    background: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.error-container a:hover {
+    background: var(--color-primary-dark);
+}

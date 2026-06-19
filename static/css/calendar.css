@@ -1,0 +1,126 @@
+.calendar-header {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-buttons a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    background: var(--color-primary);
+    color: #ffffff;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.nav-buttons a:hover {
+    background: var(--color-primary-dark);
+}
+
+.nav-buttons span {
+    min-width: 92px;
+    text-align: center;
+    color: var(--color-muted);
+    font-weight: 600;
+}
+
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+}
+
+.calendar-table th {
+    padding: 12px;
+    background: #eef3ff;
+    color: var(--color-primary-dark);
+    text-align: center;
+}
+
+.calendar-table td {
+    height: 88px;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    text-align: center;
+    vertical-align: top;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.calendar-table td:hover {
+    background: #f2f6ff;
+}
+
+.calendar-table td.empty,
+.calendar-table td.empty:hover {
+    background: var(--color-surface-muted);
+    cursor: default;
+}
+
+.day-cell {
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.day-cell.has-events {
+    color: var(--color-primary);
+}
+
+.event-count {
+    margin-top: 5px;
+    color: var(--color-muted);
+    font-size: 12px;
+}
+
+.event-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 4px;
+    border-radius: 50%;
+    background: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+    .calendar-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .nav-buttons {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .nav-buttons a {
+        width: 100%;
+    }
+
+    .calendar-table td {
+        height: 68px;
+        padding: 8px;
+    }
+}

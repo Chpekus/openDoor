@@ -23,8 +23,8 @@ function updateStream() {
         .then(data => {
             if (data.frame) {
                 streamFrame.src = 'data:image/jpeg;base64,' + data.frame;
-                streamFrame.style.display = 'block';
-                loadingDiv.style.display = 'none';
+                streamFrame.classList.remove('is-hidden');
+                loadingDiv.classList.add('is-hidden');
             }
         })
         .catch(error => {

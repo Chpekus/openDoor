@@ -8,9 +8,10 @@ from pathlib import Path
 from utils.logger import log_error, log_info
 
 SCREENSHOTS_ROOT = Path("screenshot_of_open")
+MEDIA_EXTENSIONS = (".png", ".webm")
 
 
-def get_screenshot_path(timestamp=None, gesture_names=None):
+def get_screenshot_path(timestamp=None, gesture_names=None, extension=".png"):
     """
     Генерирует путь для сохранения скриншота
     
@@ -43,9 +44,9 @@ def get_screenshot_path(timestamp=None, gesture_names=None):
     
     if gesture_names:
         gesture_str = "+".join(gesture_names[:3])  # Максимум 3 жеста в имени
-        filename = f"{time_str}_{gesture_str}.png"
+        filename = f"{time_str}_{gesture_str}{extension}"
     else:
-        filename = f"{time_str}.png"
+        filename = f"{time_str}{extension}"
     
     return dir_path / filename
 
@@ -70,7 +71,10 @@ def get_day_screenshots(year, month, day, max_count=6):
     
     try:
         # Получаем все PNG файлы в директории, отсортированные по времени
-        screenshots = sorted(day_dir.glob("*.png"))
+        screenshots = sorted(
+            file_path for file_path in day_dir.iterdir()
+            if file_path.is_file() and file_path.suffix.lower() in MEDIA_EXTENSIONS
+        )
         
         # Возвращаем только максимум max_count
         return screenshots[-max_count:]
@@ -102,7 +106,10 @@ def get_calendar_data(year, month):
         for day_dir in month_dir.iterdir():
             if day_dir.is_dir():
                 day = day_dir.name
-                screenshots = list(day_dir.glob("*.png"))
+                screenshots = [
+                    file_path for file_path in day_dir.iterdir()
+                    if file_path.is_file() and file_path.suffix.lower() in MEDIA_EXTENSIONS
+                ]
                 if screenshots:
                     calendar_data[day] = len(screenshots)
     except Exception as e:

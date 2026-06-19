@@ -135,10 +135,16 @@
         <div class="screenshots-grid">
             {% for open_event in door_opens %}
             <div class="screenshot-card">
-                <img src="{{ url_for('api_image', img_path=open_event['img_path']) }}" 
-                     alt="Screenshot" 
+                {% if open_event['img_path'].lower().endswith('.webm') %}
+                <video class="screenshot-image" controls muted preload="metadata">
+                    <source src="{{ url_for('api_image', img_path=open_event['img_path']) }}" type="video/webm">
+                </video>
+                {% else %}
+                <img src="{{ url_for('api_image', img_path=open_event['img_path']) }}"
+                     alt="Screenshot"
                      class="screenshot-image"
-                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22250%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22300%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3EФото не доступно%3C/text%3E%3C/svg%3E'">
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22250%22%3E%3Crect fill=%22%23f0f0f0%22 width=%22300%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3E%D0%A4%D0%BE%D1%82%D0%BE %D0%BD%D0%B5 %D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%D0%BD%D0%BE%3C/text%3E%3C/svg%3E'">
+                {% endif %}
                 <div class="screenshot-info">
                     <div class="screenshot-time">
                         ⏰ {{ open_event['timestamp'].strftime('%H:%M:%S') if open_event['timestamp'] else 'Неизвестно' }}

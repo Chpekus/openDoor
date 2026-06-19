@@ -89,7 +89,8 @@ def open_door(source_vebka=False, id_intercom=None):
             return None
         return cv2.VideoCapture(0 if source_vebka else stream_URL)
     
-    findGesture = []
+    findGesture = deque(maxlen=GESTURE_WINDOW_SIZE)
+    opening_frame_window = deque(maxlen=GESTURE_WINDOW_SIZE)
     last_open = time.time() - 10
 
     website_session = get_session()
@@ -186,8 +187,8 @@ def open_door(source_vebka=False, id_intercom=None):
                     )
 
             findGesture.append(gesture_name)
-            if len(findGesture) > GESTURE_WINDOW_SIZE:
-                findGesture.pop(0)
+            opening_frame_window.append((gesture_name, processed_frame.copy()))
+            if len(findGesture) == GESTURE_WINDOW_SIZE:
                 
                 # Проверяем комбинацию жестов
                 tidi_count = findGesture.count("TiDishi")
@@ -201,7 +202,14 @@ def open_door(source_vebka=False, id_intercom=None):
 
                         # Получаем путь с новой структурой (год/месяц/день)
                         gestures = ["TiDishi", "Rock"]
-                        output_path = get_screenshot_path(now, gestures)
+                        output_path = get_screenshot_path(now, gestures, extension=".webm")
+                        clip_frames = []
+                        clip_counts = {gesture: 0 for gesture in GESTURE_COMBO_REQUIRED}
+                        for frame_gesture, frame in opening_frame_window:
+                            required_count = GESTURE_COMBO_REQUIRED.get(frame_gesture, 0)
+                            if required_count and clip_counts[frame_gesture] < required_count:
+                                clip_frames.append(frame)
+                                clip_counts[frame_gesture] += 1
 
                         task_queue.put(Task(
                             kind="open_door",
@@ -213,8 +221,8 @@ def open_door(source_vebka=False, id_intercom=None):
                         ))
 
                         task_queue.put(Task(
-                            kind="save_screenshot",
-                            data={"frame": last_frame, "path": str(output_path)}
+                            kind="save_open_clip",
+                            data={"frames": clip_frames, "path": str(output_path)}
                         ))
                         
                         log_door_open(str(output_path), gestures, 200, "Queued")

@@ -16,6 +16,9 @@ from services.novotelecom import send_post_open_door_request, make_session, get_
 
 task_queue = Queue()
 
+OPEN_CLIP_FPS = 5
+OPEN_CLIP_MAX_WIDTH = 640
+
 
 @dataclass
 class Task:
@@ -24,6 +27,62 @@ class Task:
     need_result: bool = False  # ждать ли результат
     result: Any = None
     event: threading.Event = field(default_factory=threading.Event)
+
+
+def save_webm_clip(frames, path, fps=OPEN_CLIP_FPS, max_width=OPEN_CLIP_MAX_WIDTH):
+    if not frames:
+        raise ValueError("No frames to save")
+
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    normalized_frames = []
+    for frame in frames:
+        if frame is None:
+            continue
+
+        height, width = frame.shape[:2]
+        if width > max_width:
+            scale = max_width / width
+            frame = cv2.resize(frame, (max_width, int(height * scale)))
+            height, width = frame.shape[:2]
+
+        even_width = width - (width % 2)
+        even_height = height - (height % 2)
+        if (even_width, even_height) != (width, height):
+            frame = cv2.resize(frame, (even_width, even_height))
+
+        normalized_frames.append(frame)
+
+    if not normalized_frames:
+        raise ValueError("No valid frames to save")
+
+    height, width = normalized_frames[0].shape[:2]
+    size = (width, height)
+
+    for codec in ("VP90", "VP80"):
+        writer = cv2.VideoWriter(
+            str(path),
+            cv2.VideoWriter_fourcc(*codec),
+            fps,
+            size
+        )
+        if not writer.isOpened():
+            writer.release()
+            continue
+
+        try:
+            for frame in normalized_frames:
+                if frame.shape[:2] != (height, width):
+                    frame = cv2.resize(frame, size)
+                writer.write(frame)
+        finally:
+            writer.release()
+
+        if path.exists() and path.stat().st_size > 0:
+            return path
+
+    raise RuntimeError("OpenCV could not encode WebM with VP9 or VP8")
 
 
 def io_worker():
@@ -79,6 +138,13 @@ def io_worker():
                     
                     cv2.imwrite(path, frame)
                     log_info("worker", f"Screenshot saved: {path}")
+
+                elif task.kind == "save_open_clip":
+                    frames = task.data["frames"]
+                    path = task.data["path"]
+
+                    save_webm_clip(frames, path)
+                    log_info("worker", f"Opening clip saved: {path}")
 
                 elif task.kind == "db_insert_gesture":
                     gesture = task.data["gesture"]

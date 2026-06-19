@@ -198,7 +198,8 @@ def api_image(img_path):
         full_path = requested_path if requested_path.is_absolute() else PROJECT_ROOT / requested_path
         full_path = full_path.resolve()
         if full_path.exists():
-            return send_file(full_path, mimetype='image/png')
+            mimetype = "video/webm" if full_path.suffix.lower() == ".webm" else "image/png"
+            return send_file(full_path, mimetype=mimetype)
         else:
             return jsonify({"error": "Image not found"}), 404
     except Exception as e:

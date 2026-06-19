@@ -37,8 +37,8 @@ function updateStats() {
     fetch('/api/stats')
         .then(response => response.json())
         .then(data => {
-            document.getElementById('stream-frames').textContent = data.stream_frames;
-            document.getElementById('processed-frames').textContent = data.processed_frames;
+            document.getElementById('stream-fps').textContent = data.stream_fps;
+            document.getElementById('processed-fps').textContent = data.processed_fps;
 
             const serverTime = new Date(data.server_time);
             document.getElementById('server-time').textContent = serverTime.toLocaleTimeString('ru-RU');

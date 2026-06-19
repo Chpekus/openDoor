@@ -98,7 +98,8 @@ def open_door(source_vebka=False, id_intercom=None):
         return cv2.VideoCapture(0 if source_vebka else stream_URL)
     
     findGesture = deque(maxlen=GESTURE_WINDOW_SIZE)
-    opening_frame_window = deque(maxlen=GESTURE_WINDOW_SIZE)
+    clip_frame_window = deque(maxlen=(GESTURE_WINDOW_SIZE + 1) // 2)
+    processed_clip_frame_count = 0
     last_open = time.time() - 10
     lock_status = LOCKED
     lock_status_until = 0
@@ -213,7 +214,9 @@ def open_door(source_vebka=False, id_intercom=None):
             draw_lock_status(processed_frame, get_lock_status())
 
             findGesture.append(gesture_name)
-            opening_frame_window.append((gesture_name, processed_frame.copy()))
+            processed_clip_frame_count += 1
+            if processed_clip_frame_count % 2:
+                clip_frame_window.append(processed_frame.copy())
             if len(findGesture) == GESTURE_WINDOW_SIZE:
                 
                 # Проверяем комбинацию жестов
@@ -229,13 +232,7 @@ def open_door(source_vebka=False, id_intercom=None):
                         # Получаем путь с новой структурой (год/месяц/день)
                         gestures = ["TiDishi", "Rock"]
                         output_path = get_screenshot_path(now, gestures, extension=".webm")
-                        clip_frames = []
-                        clip_counts = {gesture: 0 for gesture in GESTURE_COMBO_REQUIRED}
-                        for frame_gesture, frame in opening_frame_window:
-                            required_count = GESTURE_COMBO_REQUIRED.get(frame_gesture, 0)
-                            if required_count and clip_counts[frame_gesture] < required_count:
-                                clip_frames.append(frame)
-                                clip_counts[frame_gesture] += 1
+                        clip_frames = list(clip_frame_window)
 
                         set_lock_status(LOCK_PENDING)
                         open_task = Task(

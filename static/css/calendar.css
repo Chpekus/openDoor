@@ -60,6 +60,7 @@
 .month-picker summary:hover,
 .month-menu a:hover {
     background: var(--color-primary-dark);
+    color: #ffffff;
 }
 
 .month-menu {

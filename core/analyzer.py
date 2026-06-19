@@ -37,6 +37,8 @@ from utils.logger import logger_main, log_info, log_warning, log_error, log_door
 frame_times = deque()     
 last_frame = None         
 processed_frame = None 
+stream_frame_count = 0
+processed_frame_count = 0
 state_lock = threading.Lock()
 
 
@@ -54,6 +56,8 @@ def open_door(source_vebka=False, id_intercom=None):
     c = 0
     global last_frame
     global processed_frame
+    global stream_frame_count
+    global processed_frame_count
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -174,6 +178,7 @@ def open_door(source_vebka=False, id_intercom=None):
             # ==== обновляем статистику по кадрам ====
             t_now = time.time()
             with state_lock:
+                stream_frame_count += 1
                 frame_times.append(t_now)
                 limit = t_now - 5.0
                 while frame_times and frame_times[0] < limit:
@@ -212,6 +217,9 @@ def open_door(source_vebka=False, id_intercom=None):
                     )
 
             draw_lock_status(processed_frame, get_lock_status())
+
+            with state_lock:
+                processed_frame_count += 1
 
             findGesture.append(gesture_name)
             processed_clip_frame_count += 1

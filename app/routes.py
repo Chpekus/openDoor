@@ -123,21 +123,16 @@ def day_view(year, month, day):
 @require_login
 def api_stats():
     """API: Получить статистику обработки"""
-    from core.analyzer import frame_times, state_lock
+    from core.analyzer import processed_frame_count, state_lock, stream_frame_count
     
     with state_lock:
-        if len(frame_times) < 2:
-            fps = 0.0
-            count = len(frame_times)
-        else:
-            dt = frame_times[-1] - frame_times[0]
-            count = len(frame_times)
-            fps = count / dt if dt > 0 else 0.0
+        stream_frames = int(stream_frame_count)
+        processed_frames = int(processed_frame_count)
     
     return jsonify({
-        "fps": round(fps, 2),
-        "frames_in_window": count,
-        "timestamp": datetime.now().isoformat()
+        "stream_frames": stream_frames,
+        "processed_frames": processed_frames,
+        "server_time": datetime.now().isoformat()
     })
 
 

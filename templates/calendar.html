@@ -16,17 +16,42 @@
             <a href="{{ url_for('logout') }}">Выход</a>
         </div>
     </div>
-    
+
     <div class="container container--narrow">
         <div class="calendar-header">
             <h2>Календарь открытий двери</h2>
-            <div class="nav-buttons">
-                <a href="?year={{ year }}&month={% if month > 1 %}{{ month - 1 }}{% else %}12{% endif %}{% if month == 1 %}&year={{ year - 1 }}{% endif %}">← Пред</a>
-                <span>{{ year }}-{{ "%02d"|format(month) }}</span>
-                <a href="?year={{ year }}&month={% if month < 12 %}{{ month + 1 }}{% else %}1{% endif %}{% if month == 12 %}&year={{ year + 1 }}{% endif %}">След →</a>
+            <div class="calendar-controls">
+                <details class="month-picker">
+                    <summary>
+                        <span id="current-month-label">{{ "%02d"|format(month) }}</span>
+                    </summary>
+                    <div class="month-menu">
+                        <a href="{{ url_for('calendar', year=year, month=1) }}" data-month="1">Янв</a>
+                        <a href="{{ url_for('calendar', year=year, month=2) }}" data-month="2">Фев</a>
+                        <a href="{{ url_for('calendar', year=year, month=3) }}" data-month="3">Мар</a>
+                        <a href="{{ url_for('calendar', year=year, month=4) }}" data-month="4">Апр</a>
+                        <a href="{{ url_for('calendar', year=year, month=5) }}" data-month="5">Май</a>
+                        <a href="{{ url_for('calendar', year=year, month=6) }}" data-month="6">Июн</a>
+                        <a href="{{ url_for('calendar', year=year, month=7) }}" data-month="7">Июл</a>
+                        <a href="{{ url_for('calendar', year=year, month=8) }}" data-month="8">Авг</a>
+                        <a href="{{ url_for('calendar', year=year, month=9) }}" data-month="9">Сен</a>
+                        <a href="{{ url_for('calendar', year=year, month=10) }}" data-month="10">Окт</a>
+                        <a href="{{ url_for('calendar', year=year, month=11) }}" data-month="11">Ноя</a>
+                        <a href="{{ url_for('calendar', year=year, month=12) }}" data-month="12">Дек</a>
+                    </div>
+                </details>
+
+                <label class="year-picker">
+                    <span>Год</span>
+                    <select id="year-select">
+                        {% for option_year in range(year - 5, year + 6) %}
+                        <option value="{{ option_year }}" {% if option_year == year %}selected{% endif %}>{{ option_year }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
             </div>
         </div>
-        
+
         <table class="calendar-table">
             <thead>
                 <tr>
@@ -44,20 +69,37 @@
                     const year = {{ year }};
                     const month = {{ month }};
                     const calendarData = {{ calendar_data | tojson }};
-                    
+                    const monthNames = [
+                        'Январь', 'Февраль', 'Март', 'Апрель',
+                        'Май', 'Июнь', 'Июль', 'Август',
+                        'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+                    ];
+                    const currentMonthLabel = document.getElementById('current-month-label');
+                    const yearSelect = document.getElementById('year-select');
+                    const monthLinks = document.querySelectorAll('.month-menu a');
+
+                    currentMonthLabel.textContent = monthNames[month - 1];
+                    monthLinks.forEach((link) => {
+                        const linkMonth = Number(link.dataset.month);
+                        if (linkMonth === month) {
+                            link.classList.add('is-active');
+                        }
+                    });
+                    yearSelect.addEventListener('change', () => {
+                        window.location.href = `/calendar?year=${yearSelect.value}&month=${month}`;
+                    });
+
                     const firstDay = new Date(year, month - 1, 1).getDay();
                     const daysInMonth = new Date(year, month, 0).getDate();
                     const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-                    
+
                     let table = '';
                     let dayCounter = 1;
-                    
-                    // Пустые клетки
+
                     for (let i = 0; i < adjustedFirstDay; i++) {
                         table += '<td class="empty"></td>';
                     }
-                    
-                    // Дни месяца
+
                     for (let i = 0; i < 6; i++) {
                         table += '<tr>';
                         for (let j = 0; j < 7; j++) {
@@ -65,7 +107,7 @@
                                 const dayStr = String(dayCounter).padStart(2, '0');
                                 const hasEvents = calendarData.hasOwnProperty(dayStr);
                                 const eventCount = hasEvents ? calendarData[dayStr] : 0;
-                                
+
                                 if (hasEvents) {
                                     table += `<td onclick="goToDay(${year}, ${month}, ${dayCounter})">`;
                                     table += `<div class="day-cell has-events">${dayCounter}</div>`;
@@ -83,9 +125,9 @@
                         table += '</tr>';
                         if (dayCounter > daysInMonth) break;
                     }
-                    
+
                     document.querySelector('tbody').innerHTML = table;
-                    
+
                     function goToDay(year, month, day) {
                         const dayStr = String(day).padStart(2, '0');
                         const monthStr = String(month).padStart(2, '0');

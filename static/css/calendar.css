@@ -12,13 +12,18 @@
     line-height: 1.2;
 }
 
-.nav-buttons {
+.calendar-controls {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.nav-buttons a {
+.month-picker {
+    position: relative;
+}
+
+.month-picker summary,
+.month-menu a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -31,15 +36,80 @@
     line-height: 1.2;
 }
 
-.nav-buttons a:hover {
+.month-picker summary {
+    min-width: 132px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.month-picker summary::-webkit-details-marker {
+    display: none;
+}
+
+.month-picker summary::after {
+    content: "";
+    width: 0;
+    height: 0;
+    margin-left: 8px;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid #ffffff;
+}
+
+.month-picker[open] summary,
+.month-picker summary:hover,
+.month-menu a:hover {
     background: var(--color-primary-dark);
 }
 
-.nav-buttons span {
-    min-width: 92px;
-    text-align: center;
+.month-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 10;
+    width: 260px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+}
+
+.month-menu a {
+    min-height: 40px;
+    background: var(--color-surface-muted);
+    color: var(--color-text);
+}
+
+.month-menu a.is-active {
+    background: var(--color-primary);
+    color: #ffffff;
+}
+
+.year-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--color-muted);
     font-weight: 600;
+}
+
+.year-picker select {
+    min-height: 36px;
+    padding: 7px 34px 7px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-weight: 600;
+}
+
+.year-picker select:focus {
+    outline: 2px solid rgba(53, 99, 233, 0.18);
+    border-color: var(--color-primary);
 }
 
 .calendar-table {
@@ -110,12 +180,26 @@
         flex-direction: column;
     }
 
-    .nav-buttons {
+    .calendar-controls {
         width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .month-picker summary,
+    .year-picker,
+    .year-picker select {
+        width: 100%;
+    }
+
+    .year-picker {
+        align-items: stretch;
         flex-direction: column;
     }
 
-    .nav-buttons a {
+    .month-menu {
+        left: 0;
+        right: auto;
         width: 100%;
     }
 

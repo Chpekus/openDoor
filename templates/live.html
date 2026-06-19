@@ -8,15 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/live.css') }}">
 </head>
 <body>
-    <div class="navbar">
-        <h1>OpenDoor</h1>
-        <div>
-            <span>Пользователь: <strong>{{ username }}</strong></span>
-            <a href="{{ url_for('calendar') }}">Календарь</a>
-            <a href="{{ url_for('logout') }}">Выход</a>
-        </div>
-    </div>
-    
+    <div class="app-layout">
+        {% include '_sidebar.html' %}
+
+        <main class="app-main">
     <div class="container">
         <h2>Текущий поток</h2>
         
@@ -39,6 +34,8 @@
                 <div class="value" id="last-update">-</div>
             </div>
         </div>
+    </div>
+        </main>
     </div>
     
     <script src="{{ url_for('static', filename='js/live.js') }}"></script>

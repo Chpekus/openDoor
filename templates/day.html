@@ -8,16 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/day.css') }}">
 </head>
 <body>
-    <div class="navbar">
-        <h1>OpenDoor</h1>
-        <div>
-            <span>Пользователь: <strong>{{ username }}</strong></span>
-            <a href="{{ url_for('live') }}">Стрим с камеры</a>
-            <a href="{{ url_for('calendar') }}">Календарь</a>
-            <a href="{{ url_for('logout') }}">Выход</a>
-        </div>
-    </div>
-    
+    <div class="app-layout">
+        {% include '_sidebar.html' %}
+
+        <main class="app-main">
     <div class="container">
         <div class="day-header">
             <h2>{{ year }}-{{ "%02d"|format(month|int) }}-{{ "%02d"|format(day|int) }}</h2>
@@ -54,6 +48,8 @@
             Записей об открытии двери через веб-сервис не найдено
         </div>
         {% endif %}
+    </div>
+        </main>
     </div>
 </body>
 </html>

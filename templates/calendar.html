@@ -8,15 +8,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/calendar.css') }}">
 </head>
 <body>
-    <div class="navbar">
-        <h1>OpenDoor</h1>
-        <div>
-            <span>Пользователь: <strong>{{ username }}</strong></span>
-            <a href="{{ url_for('live') }}">Стрим с камеры</a>
-            <a href="{{ url_for('logout') }}">Выход</a>
-        </div>
-    </div>
+    <div class="app-layout">
+        {% include '_sidebar.html' %}
 
+        <main class="app-main">
     <div class="container container--narrow">
         <div class="calendar-header">
             <h2>Календарь открытий двери</h2>
@@ -136,6 +131,8 @@
                 </script>
             </tbody>
         </table>
+    </div>
+        </main>
     </div>
 </body>
 </html>

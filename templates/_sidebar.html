@@ -1,0 +1,40 @@
+<input type="checkbox" id="sidebar-toggle" class="sidebar-state" checked>
+<aside class="sidebar" aria-label="Основная навигация">
+    <div class="sidebar-header">
+        <a class="sidebar-brand" href="{{ url_for('live') }}">
+            <span class="sidebar-brand-mark">O</span>
+            <span class="sidebar-label">OpenDoor</span>
+        </a>
+        <label class="sidebar-toggle" for="sidebar-toggle" title="Свернуть меню">
+            <span></span>
+            <span></span>
+            <span></span>
+        </label>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a class="sidebar-link {% if request.endpoint == 'live' %}is-active{% endif %}" href="{{ url_for('live') }}">
+            <span class="sidebar-icon" aria-hidden="true">▶</span>
+            <span class="sidebar-label">Стримы</span>
+        </a>
+        <a class="sidebar-link" href="#">
+            <span class="sidebar-icon" aria-hidden="true">⌂</span>
+            <span class="sidebar-label">Адреса подъездов</span>
+        </a>
+        <a class="sidebar-link {% if request.endpoint in ['calendar', 'day_view'] %}is-active{% endif %}" href="{{ url_for('calendar') }}">
+            <span class="sidebar-icon" aria-hidden="true">▣</span>
+            <span class="sidebar-label">Архив</span>
+        </a>
+        <a class="sidebar-link" href="#">
+            <span class="sidebar-icon" aria-hidden="true">⚙</span>
+            <span class="sidebar-label">Конфиги</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="sidebar-link" href="{{ url_for('logout') }}">
+            <span class="sidebar-icon" aria-hidden="true">↩</span>
+            <span class="sidebar-label">Выйти</span>
+        </a>
+    </div>
+</aside>

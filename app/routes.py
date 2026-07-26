@@ -7,8 +7,6 @@ import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import cv2
-import base64
-from io import BytesIO
 
 from config.settings import WEB_HOST, WEB_PORT, SECRET_KEY, INTERCOM_ID
 from utils.auth import require_login, login_user, logout_user, verify_password, get_current_user, is_session_valid
@@ -155,17 +153,12 @@ def api_current_frame():
                 return jsonify({"error": "No frame available"}), 500
             frame_to_send = processed_frame.copy()
         
-        # Конвертируем в JPEG
+        # Возвращаем JPEG как бинарные данные, без JSON/Base64.
         ret, buffer = cv2.imencode('.jpg', frame_to_send)
+        if not ret:
+            return jsonify({"error": "Failed to encode frame"}), 500
         frame_bytes = buffer.tobytes()
-        
-        # Конвертируем в base64
-        frame_base64 = base64.b64encode(frame_bytes).decode('utf-8')
-        
-        return jsonify({
-            "frame": frame_base64,
-            "timestamp": datetime.now().isoformat()
-        })
+        return app.response_class(frame_bytes, mimetype='image/jpeg')
     except Exception as e:
         log_error("app", f"Error getting current frame: {e}")
         return jsonify({"error": str(e)}), 500

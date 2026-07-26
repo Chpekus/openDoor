@@ -4,33 +4,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const streamFrame = document.getElementById('stream-frame');
     const loadingDiv = document.getElementById('loading');
     
-    // Обновляем кадр каждые 500ms
-    setInterval(updateStream, 500);
+    connectStream();
     
     // Обновляем статистику каждые 1 секунду
     setInterval(updateStats, 1000);
 });
 
-function updateStream() {
+function connectStream() {
     const streamFrame = document.getElementById('stream-frame');
     const loadingDiv = document.getElementById('loading');
-    
-    fetch('/api/current_frame')
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch frame');
-            return response.json();
-        })
-        .then(data => {
-            if (data.frame) {
-                streamFrame.src = 'data:image/jpeg;base64,' + data.frame;
-                streamFrame.classList.remove('is-hidden');
-                loadingDiv.classList.add('is-hidden');
-            }
-        })
-        .catch(error => {
-            console.error('Error updating stream:', error);
-            loadingDiv.innerHTML = '⚠️ Ошибка загрузки потока';
-        });
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(`${protocol}//${window.location.host}/ws/stream`);
+    socket.binaryType = 'blob';
+
+    socket.onmessage = event => {
+        const url = URL.createObjectURL(event.data);
+        const previousUrl = streamFrame.dataset.objectUrl;
+        streamFrame.onload = () => {
+            if (previousUrl) URL.revokeObjectURL(previousUrl);
+        };
+        streamFrame.dataset.objectUrl = url;
+        streamFrame.src = url;
+        streamFrame.classList.remove('is-hidden');
+        loadingDiv.classList.add('is-hidden');
+    };
+
+    socket.onerror = error => console.error('Stream WebSocket error:', error);
+    socket.onclose = () => {
+        loadingDiv.classList.remove('is-hidden');
+        setTimeout(connectStream, 1000);
+    };
 }
 
 function updateStats() {

@@ -40,6 +40,7 @@ processed_frame_times = deque()
 last_frame = None         
 processed_frame = None 
 latest_jpeg = None
+jpeg_version = 0
 state_lock = threading.Lock()
 
 
@@ -58,6 +59,7 @@ def open_door(source_vebka=False, id_intercom=None):
     global last_frame
     global processed_frame
     global latest_jpeg
+    global jpeg_version
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -224,6 +226,7 @@ def open_door(source_vebka=False, id_intercom=None):
             if ret:
                 with state_lock:
                     latest_jpeg = jpeg_buffer.tobytes()
+                    jpeg_version += 1
 
             with state_lock:
                 processed_frame_times.append(time.time())

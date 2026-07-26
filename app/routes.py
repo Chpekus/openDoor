@@ -2,6 +2,7 @@
 Основное Flask приложение с вебинтерфейсом и API
 """
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file
+from flask_sock import Sock
 from flask_session import Session
 import os
 from datetime import datetime, timedelta
@@ -15,6 +16,7 @@ from db.database import get_door_opens_for_day, get_recent_door_opens
 from utils.logger import log_info, log_error
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
+sock = Sock(app)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
@@ -157,6 +159,27 @@ def api_current_frame():
     except Exception as e:
         log_error("app", f"Error getting current frame: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@sock.route('/ws/stream')
+def ws_stream(ws):
+    """Отправляет клиенту только самые свежие JPEG-кадры."""
+    import time
+
+    from core.analyzer import latest_jpeg, jpeg_version, state_lock
+
+    sent_version = -1
+    while True:
+        with state_lock:
+            current_version = jpeg_version
+            frame_bytes = latest_jpeg
+
+        if frame_bytes is not None and current_version != sent_version:
+            ws.send(frame_bytes)
+            sent_version = current_version
+        else:
+            # Не держим устаревшие кадры в очереди клиента.
+            time.sleep(0.03)
 
 
 @app.route('/api/recent_opens')

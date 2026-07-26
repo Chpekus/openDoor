@@ -13,8 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
 function connectStream() {
     const streamFrame = document.getElementById('stream-frame');
     const loadingDiv = document.getElementById('loading');
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}/ws/stream`);
+    // HTTP-страница опубликована через порт 5096, а TCP-проброс WebSocket
+    // напрямую на Gunicorn доступен через внешний порт 4106.
+    const socket = new WebSocket(`ws://${window.location.hostname}:4106/ws/stream`);
     socket.binaryType = 'blob';
 
     socket.onmessage = event => {

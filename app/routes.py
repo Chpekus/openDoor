@@ -168,6 +168,10 @@ def ws_stream(ws):
 
     from core.analyzer import latest_jpeg, jpeg_version, state_lock
 
+    if not is_session_valid():
+        ws.close(1008, 'Authentication required')
+        return
+
     sent_version = -1
     while True:
         with state_lock:
@@ -175,6 +179,8 @@ def ws_stream(ws):
             frame_bytes = latest_jpeg
 
         if frame_bytes is not None and current_version != sent_version:
+            # Отправляем только текущий кадр. Если клиент медленный, следующая
+            # итерация возьмёт новую версию, а промежуточные кадры будут отброшены.
             ws.send(frame_bytes)
             sent_version = current_version
         else:

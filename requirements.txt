@@ -6,6 +6,7 @@ numpy
 requests
 psycopg2-binary
 gunicorn
+gevent
 mediapipe==0.10.14
 flask_session
 flask-sock

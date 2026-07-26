@@ -1,6 +1,6 @@
 """
 WSGI entry point для Gunicorn
-Запуск: gunicorn --bind 0.0.0.0:8000 wsgi:app
+Запуск: gunicorn --worker-class gevent --workers 1 --bind 0.0.0.0:8000 wsgi:app
 """
 
 import sys

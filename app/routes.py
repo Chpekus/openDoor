@@ -146,18 +146,13 @@ def api_stats():
 def api_current_frame():
     """API: Получить текущий кадр из стрима"""
     try:
-        from core.analyzer import processed_frame, state_lock
+        from core.analyzer import latest_jpeg, state_lock
         
         with state_lock:
-            if processed_frame is None:
+            if latest_jpeg is None:
                 return jsonify({"error": "No frame available"}), 500
-            frame_to_send = processed_frame.copy()
-        
-        # Возвращаем JPEG как бинарные данные, без JSON/Base64.
-        ret, buffer = cv2.imencode('.jpg', frame_to_send)
-        if not ret:
-            return jsonify({"error": "Failed to encode frame"}), 500
-        frame_bytes = buffer.tobytes()
+            frame_bytes = latest_jpeg
+
         return app.response_class(frame_bytes, mimetype='image/jpeg')
     except Exception as e:
         log_error("app", f"Error getting current frame: {e}")

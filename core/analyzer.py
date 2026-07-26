@@ -39,6 +39,7 @@ stream_frame_times = deque()
 processed_frame_times = deque()
 last_frame = None         
 processed_frame = None 
+latest_jpeg = None
 state_lock = threading.Lock()
 
 
@@ -56,6 +57,7 @@ def open_door(source_vebka=False, id_intercom=None):
     c = 0
     global last_frame
     global processed_frame
+    global latest_jpeg
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -215,6 +217,13 @@ def open_door(source_vebka=False, id_intercom=None):
                     draw_gesture_label(processed_frame, hand_landmarks, gesture_name)
 
             draw_lock_status(processed_frame, get_lock_status())
+
+            # Кодируем кадр один раз при его обновлении. Клиенты получают
+            # общий снимок из кэша, не создавая JPEG на каждый HTTP-запрос.
+            ret, jpeg_buffer = cv2.imencode('.jpg', processed_frame)
+            if ret:
+                with state_lock:
+                    latest_jpeg = jpeg_buffer.tobytes()
 
             with state_lock:
                 processed_frame_times.append(time.time())

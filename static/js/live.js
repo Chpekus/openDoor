@@ -44,6 +44,14 @@ function updateStats() {
             document.getElementById('stream-fps').textContent = data.stream_fps;
             document.getElementById('processed-fps').textContent = data.processed_fps;
 
+            const streamError = document.getElementById('stream-error');
+            const streamFrame = document.getElementById('stream-frame');
+            const showStreamError = data.stream_open_failures >= 3;
+            streamError.classList.toggle('is-hidden', !showStreamError);
+            if (showStreamError) {
+                streamFrame.classList.add('is-hidden');
+            }
+
             const serverTime = new Date(data.server_time);
             document.getElementById('server-time').textContent = serverTime.toLocaleTimeString('ru-RU');
         })

@@ -41,6 +41,7 @@ last_frame = None
 processed_frame = None 
 latest_jpeg = None
 jpeg_version = 0
+stream_open_failures = 0
 state_lock = threading.Lock()
 
 
@@ -60,6 +61,7 @@ def open_door(source_vebka=False, id_intercom=None):
     global processed_frame
     global latest_jpeg
     global jpeg_version
+    global stream_open_failures
 
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -154,10 +156,15 @@ def open_door(source_vebka=False, id_intercom=None):
                 cap = open_stream(website_session, id_intercom)
 
                 if not cap:
+                    with state_lock:
+                        stream_open_failures += 1
                     log_warning("door_open", "Can't open stream, requesting new session...")
                     website_session = get_session()
                     time.sleep(1)
                     continue
+
+                with state_lock:
+                    stream_open_failures = 0
                 
                 log_info(
                     "door_open",

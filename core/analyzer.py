@@ -52,6 +52,7 @@ class LatestFrameReader:
     def __init__(self, cap):
         self.cap = cap
         self.latest_frame = None
+        self.read_failures = 0
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
         self.thread = threading.Thread(target=self._read_loop, daemon=True)
@@ -61,10 +62,13 @@ class LatestFrameReader:
         while not self.stop_event.is_set():
             ret, frame = self.cap.read()
             if not ret or frame is None:
+                with self.lock:
+                    self.read_failures += 1
                 time.sleep(0.01)
                 continue
             with self.lock:
                 self.latest_frame = frame
+                self.read_failures = 0
 
     def get_latest(self):
         with self.lock:
@@ -75,6 +79,10 @@ class LatestFrameReader:
     def stop(self):
         self.stop_event.set()
         self.thread.join(timeout=2)
+
+    def is_unhealthy(self):
+        with self.lock:
+            return self.read_failures >= 100
 
 
 def open_door(source_vebka=False, id_intercom=None):
@@ -180,7 +188,11 @@ def open_door(source_vebka=False, id_intercom=None):
             now = datetime.now()            
 
             
-            if time.time() > stream_time_request or not ret or frame_bgr is None:
+            if (
+                time.time() > stream_time_request
+                or cap is None
+                or (frame_reader is not None and frame_reader.is_unhealthy())
+            ):
                 if cap:
                     log_info("door_open", "Requesting new stream URL...")
                     if frame_reader:
@@ -220,7 +232,8 @@ def open_door(source_vebka=False, id_intercom=None):
             ret = frame_bgr is not None
 
             if not ret:
-                log_warning("door_open", "cap.read() returned False")
+                # Reader ещё может получать первый кадр из источника.
+                time.sleep(0.01)
                 continue
 
             if frame_bgr is None:

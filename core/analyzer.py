@@ -28,7 +28,8 @@ from config.settings import (
     LOGIN, PASSWORD, BEARER_TOKEN, INTERCOM_ID,
     GESTURE_MIN_DETECTION_CONFIDENCE, GESTURE_MIN_TRACKING_CONFIDENCE,
     GESTURE_MAX_HANDS, FRAME_SKIP_RATE, GESTURE_WINDOW_SIZE,
-    GESTURE_COMBO_REQUIRED, DOOR_OPEN_COOLDOWN, STREAM_LIFETIME
+    GESTURE_COMBO_REQUIRED, DOOR_OPEN_COOLDOWN, STREAM_LIFETIME,
+    STREAM_WS_FPS
 )
 from utils.storage import get_screenshot_path
 from utils.logger import logger_main, log_info, log_warning, log_error, log_door_open
@@ -172,7 +173,12 @@ def open_door(source_vebka=False, id_intercom=None):
                 )
                 
 
-                cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                buffer_set = cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                buffer_size = cap.get(cv2.CAP_PROP_BUFFERSIZE)
+                log_info(
+                    "door_open",
+                    f"buffer_set={buffer_set}, buffer_size={buffer_size}"
+                )
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
             ret, frame_bgr = cap.read()

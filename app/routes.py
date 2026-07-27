@@ -173,12 +173,15 @@ def ws_stream(ws):
     import time
 
     import core.analyzer as analyzer
+    from config.settings import STREAM_WS_FPS
 
     if not is_session_valid():
         ws.close(1008, 'Authentication required')
         return
 
     sent_version = -1
+    last_sent_at = 0.0
+    send_interval = 1.0 / max(STREAM_WS_FPS, 1)
     while True:
         with analyzer.state_lock:
             # Читаем значения из модуля при каждой итерации. Импорт целых
@@ -186,11 +189,17 @@ def ws_stream(ws):
             current_version = analyzer.jpeg_version
             frame_bytes = analyzer.latest_jpeg
 
-        if frame_bytes is not None and current_version != sent_version:
+        now = time.monotonic()
+        if (
+            frame_bytes is not None
+            and current_version != sent_version
+            and now - last_sent_at >= send_interval
+        ):
             # Отправляем только текущий кадр. Если клиент медленный, следующая
             # итерация возьмёт новую версию, а промежуточные кадры будут отброшены.
             ws.send(frame_bytes)
             sent_version = current_version
+            last_sent_at = now
         else:
             # Не держим устаревшие кадры в очереди клиента.
             time.sleep(0.03)

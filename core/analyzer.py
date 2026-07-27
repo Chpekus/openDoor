@@ -46,6 +46,37 @@ stream_open_failures = 0
 state_lock = threading.Lock()
 
 
+class LatestFrameReader:
+    """Постоянно читает VideoCapture и хранит только последний кадр."""
+
+    def __init__(self, cap):
+        self.cap = cap
+        self.latest_frame = None
+        self.lock = threading.Lock()
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(target=self._read_loop, daemon=True)
+        self.thread.start()
+
+    def _read_loop(self):
+        while not self.stop_event.is_set():
+            ret, frame = self.cap.read()
+            if not ret or frame is None:
+                time.sleep(0.01)
+                continue
+            with self.lock:
+                self.latest_frame = frame
+
+    def get_latest(self):
+        with self.lock:
+            if self.latest_frame is None:
+                return None
+            return self.latest_frame.copy()
+
+    def stop(self):
+        self.stop_event.set()
+        self.thread.join(timeout=2)
+
+
 def open_door(source_vebka=False, id_intercom=None):
     """
     Основной цикл обработки видеопотока
@@ -138,6 +169,7 @@ def open_door(source_vebka=False, id_intercom=None):
 
     website_session = get_session()
     cap = open_stream(website_session, id_intercom)
+    frame_reader = LatestFrameReader(cap) if cap else None
 
     stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
@@ -151,6 +183,8 @@ def open_door(source_vebka=False, id_intercom=None):
             if time.time() > stream_time_request or not ret or frame_bgr is None:
                 if cap:
                     log_info("door_open", "Requesting new stream URL...")
+                    if frame_reader:
+                        frame_reader.stop()
                     cap.release()
                     time.sleep(1)
 
@@ -166,6 +200,7 @@ def open_door(source_vebka=False, id_intercom=None):
 
                 with state_lock:
                     stream_open_failures = 0
+                frame_reader = LatestFrameReader(cap)
                 
                 log_info(
                     "door_open",
@@ -181,7 +216,8 @@ def open_door(source_vebka=False, id_intercom=None):
                 )
                 stream_time_request = time.time() + STREAM_LIFETIME + random.randint(50, 120)
 
-            ret, frame_bgr = cap.read()
+            frame_bgr = frame_reader.get_latest() if frame_reader else None
+            ret = frame_bgr is not None
 
             if not ret:
                 log_warning("door_open", "cap.read() returned False")
@@ -298,6 +334,8 @@ def open_door(source_vebka=False, id_intercom=None):
         log_error("door_open", f"Unexpected error: {e}", exc_info=True)
     finally:
         hands.close()
+        if frame_reader:
+            frame_reader.stop()
         if cap:
             cap.release()
         cv2.destroyAllWindows()

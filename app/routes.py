@@ -172,7 +172,7 @@ def ws_stream(ws):
     """Отправляет клиенту только самые свежие JPEG-кадры."""
     import time
 
-    from core.analyzer import latest_jpeg, jpeg_version, state_lock
+    import core.analyzer as analyzer
 
     if not is_session_valid():
         ws.close(1008, 'Authentication required')
@@ -180,9 +180,11 @@ def ws_stream(ws):
 
     sent_version = -1
     while True:
-        with state_lock:
-            current_version = jpeg_version
-            frame_bytes = latest_jpeg
+        with analyzer.state_lock:
+            # Читаем значения из модуля при каждой итерации. Импорт целых
+            # значений один раз заморозил бы WebSocket на первом кадре.
+            current_version = analyzer.jpeg_version
+            frame_bytes = analyzer.latest_jpeg
 
         if frame_bytes is not None and current_version != sent_version:
             # Отправляем только текущий кадр. Если клиент медленный, следующая

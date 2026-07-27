@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     connectStream();
     
     // Обновляем статистику каждые 1 секунду
-    setInterval(updateStats, 1000);
+    connectStats();
 });
 
 function connectStream() {
@@ -56,4 +56,27 @@ function updateStats() {
             document.getElementById('server-time').textContent = serverTime.toLocaleTimeString('ru-RU');
         })
         .catch(error => console.error('Error updating stats:', error));
+}
+
+function connectStats() {
+    const socket = new WebSocket(`ws://${window.location.hostname}:4106/ws/stats`);
+
+    socket.onmessage = event => {
+        const data = JSON.parse(event.data);
+        document.getElementById('stream-fps').textContent = data.stream_fps;
+        document.getElementById('processed-fps').textContent = data.processed_fps;
+
+        const streamError = document.getElementById('stream-error');
+        const streamFrame = document.getElementById('stream-frame');
+        const showStreamError = data.stream_open_failures >= 3;
+        streamError.classList.toggle('is-hidden', !showStreamError);
+        if (showStreamError) streamFrame.classList.add('is-hidden');
+
+        const serverTime = new Date(data.server_time);
+        document.getElementById('server-time').textContent =
+            serverTime.toLocaleTimeString('ru-RU');
+    };
+
+    socket.onerror = error => console.error('Stats WebSocket error:', error);
+    socket.onclose = () => setTimeout(connectStats, 1000);
 }

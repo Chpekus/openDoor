@@ -196,6 +196,38 @@ def ws_stream(ws):
             time.sleep(0.03)
 
 
+@sock.route('/ws/stats')
+def ws_stats(ws):
+    """Отправляет статистику стрима по постоянному WebSocket-соединению."""
+    import json
+    import time
+
+    if not is_session_valid():
+        ws.close(1008, 'Authentication required')
+        return
+
+    while True:
+        from core.analyzer import processed_frame_times, state_lock, stream_frame_times
+        from core.analyzer import stream_open_failures
+
+        def calculate_fps(times):
+            if len(times) < 2:
+                return 0
+            dt = times[-1] - times[0]
+            return int(round(len(times) / dt)) if dt > 0 else 0
+
+        with state_lock:
+            stats = {
+                'stream_fps': calculate_fps(stream_frame_times),
+                'processed_fps': calculate_fps(processed_frame_times),
+                'stream_open_failures': stream_open_failures,
+                'server_time': datetime.now().isoformat(),
+            }
+
+        ws.send(json.dumps(stats))
+        time.sleep(1)
+
+
 @app.route('/api/recent_opens')
 @require_login
 def api_recent_opens():

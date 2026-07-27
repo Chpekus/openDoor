@@ -18,17 +18,37 @@ function connectStream() {
     const socket = new WebSocket(`ws://${window.location.hostname}:4106/ws/stream`);
     socket.binaryType = 'blob';
 
+    let rendering = false;
+    let pendingBlob = null;
+
     socket.onmessage = event => {
-        const url = URL.createObjectURL(event.data);
+        // Не накапливаем JPEG в очереди браузера: оставляем только самый свежий.
+        if (rendering) {
+            pendingBlob = event.data;
+            return;
+        }
+        renderLatestFrame(event.data);
+    };
+
+    function renderLatestFrame(blob) {
+        rendering = true;
+        const url = URL.createObjectURL(blob);
         const previousUrl = streamFrame.dataset.objectUrl;
         streamFrame.onload = () => {
             if (previousUrl) URL.revokeObjectURL(previousUrl);
+            URL.revokeObjectURL(url);
+            rendering = false;
+            if (pendingBlob) {
+                const nextBlob = pendingBlob;
+                pendingBlob = null;
+                renderLatestFrame(nextBlob);
+            }
         };
         streamFrame.dataset.objectUrl = url;
         streamFrame.src = url;
         streamFrame.classList.remove('is-hidden');
         loadingDiv.classList.add('is-hidden');
-    };
+    }
 
     socket.onerror = error => console.error('Stream WebSocket error:', error);
     socket.onclose = () => {

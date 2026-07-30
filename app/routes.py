@@ -5,7 +5,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from flask_sock import Sock
 from flask_session import Session
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, time as datetime_time, timedelta
 from pathlib import Path
 import cv2
 
@@ -22,6 +22,28 @@ app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _format_timestamp_time(value):
+    if not value:
+        return 'Неизвестно'
+
+    if isinstance(value, (datetime, datetime_time)):
+        return value.strftime('%H:%M:%S')
+
+    if isinstance(value, str):
+        raw_value = value.strip()
+        for parser in (datetime.fromisoformat, datetime_time.fromisoformat):
+            try:
+                return parser(raw_value).strftime('%H:%M:%S')
+            except ValueError:
+                continue
+        return raw_value
+
+    if hasattr(value, 'strftime'):
+        return value.strftime('%H:%M:%S')
+
+    return str(value)
 
 
 # === АУТЕНТИФИКАЦИЯ ===
@@ -101,6 +123,8 @@ def day_view(year, month, day):
     try:
         # Получаем скриншоты для дня из БД
         door_opens = get_door_opens_for_day(year, month, day)
+        for open_event in door_opens:
+            open_event['timestamp_display'] = _format_timestamp_time(open_event.get('timestamp'))
         
         log_info("app", f"User {username} viewing day {year}-{month}-{day}")
         
@@ -197,7 +221,10 @@ def ws_stream(ws):
         ):
             # Отправляем только текущий кадр. Если клиент медленный, следующая
             # итерация возьмёт новую версию, а промежуточные кадры будут отброшены.
-            ws.send(frame_bytes)
+            try:
+                ws.send(frame_bytes)
+            except (ConnectionError, OSError):
+                return
             sent_version = current_version
             last_sent_at = now
         else:
@@ -233,7 +260,10 @@ def ws_stats(ws):
                 'server_time': datetime.now().isoformat(),
             }
 
-        ws.send(json.dumps(stats))
+        try:
+            ws.send(json.dumps(stats))
+        except (ConnectionError, OSError):
+            return
         time.sleep(1)
 
 

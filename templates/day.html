@@ -34,7 +34,7 @@
                 {% endif %}
                 <div class="screenshot-info">
                     <div class="screenshot-time">
-                        {{ open_event['timestamp'].strftime('%H:%M:%S') if open_event['timestamp'] else 'Неизвестно' }}
+                        {{ open_event['timestamp_display'] }}
                     </div>
                     <div class="response-code">
                         Ответ: {{ open_event['response_code'] }}

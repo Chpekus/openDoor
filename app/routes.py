@@ -12,7 +12,7 @@ import cv2
 from config.settings import WEB_HOST, WEB_PORT, SECRET_KEY, INTERCOM_ID
 from utils.auth import require_login, login_user, logout_user, verify_password, get_current_user, is_session_valid
 from utils.storage import get_screenshot_path, get_day_screenshots, get_calendar_data, get_screenshot_info
-from db.database import get_door_opens_for_day, get_recent_door_opens
+from db.repositories import get_door_opens_for_day, get_recent_door_opens
 from utils.logger import log_info, log_error
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')

@@ -9,9 +9,9 @@ import cv2
 from pathlib import Path
 from datetime import datetime
 
-from config.settings import PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD, BEARER_TOKEN
+from config.settings import BEARER_TOKEN
 from utils.logger import log_info, log_warning, log_error, log_door_open
-from db.database import Database, insert_gesture, insert_door_open
+from db.repositories import insert_gesture, insert_door_open
 from services.novotelecom import send_post_open_door_request, make_session, get_stream_url
 
 task_queue = Queue()
@@ -156,15 +156,8 @@ def io_worker():
                     insert_gesture(gesture)
 
                 elif task.kind == "db_insert":
+                    raise ValueError("Raw SQL tasks are no longer supported")
                     # Устаревший формат, поддерживаем для совместимости
-                    sql = task.data["sql"]
-                    params = task.data["params"]
-                    if not isinstance(params, (tuple, list)):
-                        params = (params,)
-                    
-                    db = Database()
-                    db.execute(sql, tuple(params))
-                    db.close()
 
             except Exception as e:
                 if task.need_result:

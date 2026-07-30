@@ -39,7 +39,7 @@ def _before_cursor_execute(conn, cursor, statement, parameters, context, execute
 def _after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
     duration_ms = (perf_counter() - context._db_started_at) * 1000
     log_db_operation(
-        operation=getattr(context, "_db_operation", "sqlalchemy.execute"),
+        operation=context.execution_options.get("db_operation", "sqlalchemy.execute"),
         success=True,
         duration_ms=duration_ms,
         statement=statement,
@@ -53,7 +53,7 @@ def _handle_db_error(exception_context):
     started_at = getattr(context, "_db_started_at", perf_counter())
     duration_ms = (perf_counter() - started_at) * 1000
     log_db_operation(
-        operation=getattr(context, "_db_operation", "sqlalchemy.execute"),
+        operation=context.execution_options.get("db_operation", "sqlalchemy.execute"),
         success=False,
         duration_ms=duration_ms,
         statement=exception_context.statement,

@@ -5,6 +5,8 @@ mediapipe
 numpy
 requests
 psycopg2-binary
+SQLAlchemy>=2.0,<3.0
+alembic
 gunicorn
 gevent
 mediapipe==0.10.14

@@ -12,6 +12,8 @@ PGPORT = os.getenv("PGPORT", "5432")
 PGDATABASE = os.getenv("PGDATABASE", "opendoor")
 PGUSER = os.getenv("PGUSER", "postgres")
 PGPASSWORD = os.getenv("PGPASSWORD", "")
+DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes", "on")
+DB_SESSION_POOL_SIZE = int(os.getenv("DB_SESSION_POOL_SIZE", "5"))
 
 # === API Новотелеком ===
 LOGIN = os.getenv("LOGIN", "")

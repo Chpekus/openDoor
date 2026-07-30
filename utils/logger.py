@@ -3,6 +3,8 @@
 """
 import logging
 import os
+import re
+from time import perf_counter
 from datetime import datetime
 from pathlib import Path
 
@@ -56,6 +58,32 @@ logger_recognition = setup_logger("recognition", "recognition.log")
 logger_door = setup_logger("door_open", "door_open.log")
 logger_database = setup_logger("database", "database.log")
 logger_app = setup_logger("app", "app.log") 
+
+_AUTH_SQL_PATTERN = re.compile(
+    r"(password|passwd|secret|token|authorization|credential|login)",
+    re.IGNORECASE,
+)
+
+
+def is_auth_query(statement):
+    """Проверяет, относится ли SQL к потенциально чувствительной авторизации."""
+    return bool(_AUTH_SQL_PATTERN.search(statement or ""))
+
+
+def log_db_operation(operation, success, duration_ms, statement=None, params=None, debug=False):
+    """Логирует ORM-операцию и SQL только для разрешённых debug-запросов."""
+    status = "success" if success else "failure"
+    message = f"DB operation={operation} status={status} duration_ms={duration_ms:.2f}"
+
+    if debug and statement and not is_auth_query(statement):
+        message += f" statement={statement!r}"
+        if params:
+            message += f" params={params!r}"
+
+    if success:
+        logger_database.info(message)
+    else:
+        logger_database.error(message)
 
 
 def log_door_open(image_path, gestures, response_code, response_text):
